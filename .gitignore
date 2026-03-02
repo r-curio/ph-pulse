@@ -1,1 +1,32 @@
 ph-pulse.md
+
+# Secrets — NEVER commit
+credentials.json
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+
+# dbt
+transforms/target/
+transforms/dbt_packages/
+transforms/logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
