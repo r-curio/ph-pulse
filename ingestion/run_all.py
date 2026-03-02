@@ -1,12 +1,14 @@
 """PH-Pulse ETL runner — executes all ingestion sources."""
 
 from ingestion.sources.psa_poverty_incidence_families import ingest as ingest_poverty
+from ingestion.sources.psa_poverty_families_5yr import ingest as ingest_poverty_5yr
 
 
 def main() -> None:
     """Run all ingestion pipelines."""
     print("=== PH-Pulse Ingestion Pipeline ===")
     ingest_poverty()
+    ingest_poverty_5yr()
     print("=== Ingestion complete ===")
 
 
