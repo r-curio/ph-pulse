@@ -88,7 +88,7 @@ export async function fetchMunicipalProvinces(
 ): Promise<string[]> {
   const res = await fetch(
     `${API_URL}/api/v1/poverty/municipal/provinces?region=${encodeURIComponent(region)}`,
-    { next: { revalidate: 3600 } }
+    { cache: "no-store" }
   );
   if (!res.ok) {
     throw new Error(`Failed to fetch municipal provinces: ${res.status}`);
@@ -139,4 +139,20 @@ export async function fetchMunicipalTopBottom(
     throw new Error(`Failed to fetch top/bottom municipalities: ${res.status}`);
   }
   return res.json() as Promise<MunicipalTopBottomResponse>;
+}
+
+/**
+ * Fetch poverty trend for a single municipality across all years.
+ */
+export async function fetchMunicipalTrend(
+  pcode: string
+): Promise<MunicipalPovertyResponse> {
+  const res = await fetch(
+    `${API_URL}/api/v1/poverty/municipal/trend/${encodeURIComponent(pcode)}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to fetch municipal trend: ${res.status}`);
+  }
+  return res.json() as Promise<MunicipalPovertyResponse>;
 }

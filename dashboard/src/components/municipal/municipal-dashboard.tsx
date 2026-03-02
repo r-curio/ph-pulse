@@ -10,6 +10,7 @@ import {
   fetchMunicipalMunicipalities,
   fetchMunicipalProvinces,
   fetchMunicipalTopBottom,
+  fetchMunicipalTrend,
 } from "@/lib/api";
 import { HistoricalSummaryCard } from "@/components/ui/historical-summary-card";
 import { MunicipalFilters } from "@/components/municipal/municipal-filters";
@@ -79,17 +80,31 @@ export function MunicipalDashboard({
     []
   );
 
-  /** Handle region change — fetch provinces and reset downstream. */
+  /** Fetch provinces reactively when selectedRegion changes. */
+  useEffect(() => {
+    if (!selectedRegion) {
+      setProvinces([]);
+      return;
+    }
+    let ignore = false;
+    fetchMunicipalProvinces(selectedRegion)
+      .then((data) => {
+        if (!ignore) setProvinces(data);
+      })
+      .catch((err) => {
+        console.error("Failed to load provinces:", err);
+        if (!ignore) setProvinces([]);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [selectedRegion]);
+
+  /** Handle region change — reset downstream and re-fetch data. */
   const handleRegionChange = useCallback(
     async (region: string) => {
       setSelectedRegion(region);
       setSelectedProvince("");
-      if (region) {
-        const fetchedProvinces = await fetchMunicipalProvinces(region);
-        setProvinces(fetchedProvinces);
-      } else {
-        setProvinces([]);
-      }
       await fetchData(region, "", selectedYear);
     },
     [fetchData, selectedYear]
@@ -119,20 +134,19 @@ export function MunicipalDashboard({
 
     const loadTrend = async () => {
       try {
-        const allYearData = await fetchMunicipalMunicipalities({
-          region: selectedRegion || undefined,
-          province: selectedProvince || undefined,
-        });
+        const topPcodes = topBottom.top.slice(0, 5).map((r) => r.pcode);
+        if (topPcodes.length === 0) {
+          if (!ignore) setTrendRecords([]);
+          return;
+        }
+
+        /* Fetch individual trends for top 5 municipalities (small queries). */
+        const trendResults = await Promise.all(
+          topPcodes.map((pcode) => fetchMunicipalTrend(pcode))
+        );
         if (ignore) return;
 
-        if (!selectedRegion && !selectedProvince) {
-          const topPcodes = topBottom.top.slice(0, 5).map((r) => r.pcode);
-          setTrendRecords(
-            allYearData.records.filter((r) => topPcodes.includes(r.pcode))
-          );
-        } else {
-          setTrendRecords(allYearData.records);
-        }
+        setTrendRecords(trendResults.flatMap((r) => r.records));
       } catch {
         if (!ignore) setTrendRecords([]);
       }
@@ -142,7 +156,7 @@ export function MunicipalDashboard({
     return () => {
       ignore = true;
     };
-  }, [selectedRegion, selectedProvince, topBottom.top]);
+  }, [topBottom.top]);
 
   /* Compute summary stats (derived values, not hooks). */
   const validRecords = records.filter(

@@ -18,13 +18,13 @@ router = APIRouter(prefix="/api/v1/poverty/municipal", tags=["municipal-poverty"
 
 
 @router.get("/regions", response_model=list[str])
-async def list_regions() -> list[str]:
+def list_regions() -> list[str]:
     """List distinct region names from municipal poverty data."""
     return get_regions()
 
 
 @router.get("/provinces", response_model=list[str])
-async def list_provinces(
+def list_provinces(
     region: str = Query(description="Region name to filter provinces by"),
 ) -> list[str]:
     """List distinct provinces for a given region."""
@@ -32,7 +32,7 @@ async def list_provinces(
 
 
 @router.get("/municipalities", response_model=MunicipalPovertyResponse)
-async def list_municipalities(
+def list_municipalities(
     region: str | None = Query(default=None, description="Filter by region"),
     province: str | None = Query(default=None, description="Filter by province"),
     year: int | None = Query(default=None, description="Filter by survey year"),
@@ -43,7 +43,7 @@ async def list_municipalities(
 
 
 @router.get("/trend/{pcode}", response_model=MunicipalPovertyResponse)
-async def get_trend(pcode: str) -> MunicipalPovertyResponse:
+def get_trend(pcode: str) -> MunicipalPovertyResponse:
     """Get poverty trend for a single municipality across all years."""
     records = get_municipality_trend(pcode)
     if not records:
@@ -54,7 +54,7 @@ async def get_trend(pcode: str) -> MunicipalPovertyResponse:
 
 
 @router.get("/top-bottom", response_model=MunicipalTopBottomResponse)
-async def get_top_bottom(
+def get_top_bottom(
     year: int = Query(description="Survey year"),
     region: str | None = Query(default=None, description="Filter by region"),
     province: str | None = Query(default=None, description="Filter by province"),
