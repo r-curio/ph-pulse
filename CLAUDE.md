@@ -80,7 +80,7 @@ python ingestion/run_all.py && cd transforms && dbt run && dbt test && cd ../ml 
 ## Git Conventions
 - Branch naming: `feat/`, `fix/`, `refactor/`, `docs/`
 - Commit messages: imperative tense, e.g. "Add regional summary mart model"
-- Always create a new branch before starting a feature
+- **STRICT RULE: Before starting any new feature, bug fix, or refactor, you MUST checkout a new branch first (`git checkout -b <prefix>/<name>`). NEVER commit new work directly to `main`. If you are on `main`, stop and create a branch before writing any code.**
 
 ## Secrets & Security
 - `credentials.json` — GCP service account key, NEVER commit
