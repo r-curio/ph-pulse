@@ -89,3 +89,51 @@ python ingestion/run_all.py && cd transforms && dbt run && dbt test && cd ../ml 
 - BigQuery credentials passed via GOOGLE_APPLICATION_CREDENTIALS_JSON env var on Vercel
 - Gemini API key stored in GEMINI_API_KEY env var
 - Always verify .gitignore before pushing
+
+## Agent Workflow
+
+### Agent-per-Folder Routing Table
+
+| Folder | Dev Agent | Reviewer | Skills to Invoke |
+|--------|-----------|----------|-----------------|
+| `ingestion/` | `ingestion-dev` | `ingestion-reviewer` | `etl-pipeline`, `bigquery-ops` |
+| `transforms/` | `transforms-dev` | `transforms-reviewer` | `dbt-workflow`, `bigquery-ops` |
+| `ml/` | `ml-dev` | `ml-reviewer` | — |
+| `genai/` | `genai-dev` | `genai-reviewer` | `genai-chat` |
+| `dashboard/` | `dashboard-dev` | `dashboard-reviewer` | `nextjs-dashboard`, `nextjs-best-practices`, `ui-ux-pro-max` |
+| `backend/` | `backend-dev` | `backend-reviewer` | `fastapi-backend`, `fastapi-expert` |
+
+**Utility agents** (not folder-specific): `pipeline-debugger`, `researcher`, `security-auditor`, `test-runner`
+
+### Skill Usage
+**ALWAYS invoke relevant skills (from the routing table above) BEFORE starting implementation.** Skills load domain-specific patterns and conventions that dev agents must follow.
+
+### Mandatory Review Loop
+
+Every code change must pass through **all 3 stages** before committing:
+
+#### Stage 1: Folder Review
+1. Dev agent implements the change
+2. Run the **folder-specific reviewer** (e.g., `ingestion-reviewer` for `ingestion/` changes)
+3. If verdict is **REQUEST CHANGES** → dev agent fixes → re-run reviewer
+4. Loop until verdict is **APPROVE**
+
+#### Stage 2: Final Review
+1. Run the **general `reviewer`** agent (cross-cutting review)
+2. If verdict is **REQUEST CHANGES** → dev agent fixes → re-run reviewer
+3. Loop until verdict is **APPROVE**
+
+#### Stage 3: Test Run
+1. Run the **`test-runner`** agent across all relevant test suites
+2. If any suite **FAILS** → dev agent fixes → re-run test-runner
+3. Loop until **ALL PASSING**
+
+**Only commit after all 3 stages pass.**
+
+### Multi-Folder Changes
+When a change spans multiple folders:
+1. Run **each folder's reviewer independently** (in parallel if possible)
+2. Fix issues per-folder until each folder reviewer APPROVEs
+3. Run the **general `reviewer`** for cross-cutting validation
+4. Run the **`test-runner`** across all affected suites
+5. Only commit after all reviews and tests pass
