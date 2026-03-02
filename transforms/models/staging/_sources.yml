@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: ph_pulse
+    database: ph-pulse
+    schema: ph_pulse
+    tables:
+      - name: raw_poverty_incidence_families
+        description: >
+          PSA poverty incidence among families by region/province.
+          Wide format with metrics for 2018, 2021, 2023.
+          All columns stored as STRING in raw layer.

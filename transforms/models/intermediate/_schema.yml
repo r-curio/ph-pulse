@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: int_poverty_by_region
+    description: >
+      Unpivoted poverty data in long format for national and regional entries.
+      One row per geo_name per year (2018, 2021, 2023).
+    columns:
+      - name: geo_name
+        description: Geographic area name.
+        tests:
+          - not_null
+      - name: geo_level
+        description: "Hierarchy level: national or region."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['national', 'region']
+      - name: year
+        description: Survey year.
+        tests:
+          - not_null
+      - name: poverty_incidence_pct
+        description: Poverty incidence among families (%).
