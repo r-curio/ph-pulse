@@ -11,6 +11,7 @@ import { PovertyTrendChart } from "@/components/charts/poverty-trend-chart";
 import { HistoricalTrendChart } from "@/components/charts/historical-trend-chart";
 import { HistoricalBarChart } from "@/components/charts/historical-bar-chart";
 import { MagnitudeChart } from "@/components/charts/magnitude-chart";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -134,6 +135,26 @@ export default async function Home() {
         {/* Magnitude Chart — Full Width */}
         <section>
           <MagnitudeChart records={historicalRegional.records} />
+        </section>
+
+        {/* Municipal Section Link */}
+        <div className="my-12 border-t border-gray-300" />
+        <section className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-gray-900">
+              Municipal Poverty Estimates (2006–2012)
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Explore poverty data for 1,646 municipalities and cities across
+              17 regions.
+            </p>
+          </div>
+          <Link
+            href="/municipal"
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            View Municipal Data
+          </Link>
         </section>
       </main>
     </div>
