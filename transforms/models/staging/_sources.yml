@@ -15,3 +15,10 @@ sources:
           PSA poverty among families 5-year historical data by region/province.
           Wide format with metrics for 1991, 2006, 2009, 2012, 2015.
           Includes magnitude of poor families. All columns STRING in raw layer.
+      - name: raw_municipal_poverty_estimates
+        description: >
+          HDX municipal poverty estimates for 1,646 municipalities/cities
+          across 17 regions and 85 provinces. Wide format with poverty
+          incidence, standard error, and CoV for 2006, 2009, 2012.
+          Includes 90% confidence intervals for 2012 only.
+          All columns STRING in raw layer.

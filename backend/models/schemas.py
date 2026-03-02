@@ -65,3 +65,36 @@ class HistoricalRegionDetailResponse(BaseModel):
     earliest_poverty_incidence_pct: float | None = None
     latest_poverty_incidence_pct: float | None = None
     latest_poverty_tier: str | None = None
+
+
+class MunicipalPovertyRecord(BaseModel):
+    """Single row from mart_municipal_poverty_summary."""
+
+    pcode: str
+    region: str
+    province: str
+    municipality_city: str
+    year: int
+    is_preliminary: bool | None = None
+    poverty_incidence_pct: float | None = None
+    standard_error: float | None = None
+    coefficient_of_variation: float | None = None
+    ci_90_lower: float | None = None
+    ci_90_upper: float | None = None
+    poverty_incidence_change: float | None = None
+    poverty_tier: str | None = None
+
+
+class MunicipalPovertyResponse(BaseModel):
+    """List response for municipal poverty data."""
+
+    count: int
+    records: list[MunicipalPovertyRecord]
+
+
+class MunicipalTopBottomResponse(BaseModel):
+    """Response for top/bottom municipalities by poverty incidence."""
+
+    year: int
+    top: list[MunicipalPovertyRecord]
+    bottom: list[MunicipalPovertyRecord]

@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/v1/poverty/historical", tags=["historical-povert
 
 
 @router.get("/regions", response_model=HistoricalPovertyResponse)
-async def list_historical_regions(
+def list_historical_regions(
     year: int | None = Query(default=None, description="Filter by survey year"),
 ) -> HistoricalPovertyResponse:
     """List historical poverty data for all regions, optionally filtered by year."""
@@ -25,7 +25,7 @@ async def list_historical_regions(
 
 
 @router.get("/regions/{region_name}", response_model=HistoricalRegionDetailResponse)
-async def get_historical_region(region_name: str) -> HistoricalRegionDetailResponse:
+def get_historical_region(region_name: str) -> HistoricalRegionDetailResponse:
     """Get historical poverty data for a specific region across all years."""
     records = get_historical_regional_by_name(region_name)
     if not records:
@@ -44,7 +44,7 @@ async def get_historical_region(region_name: str) -> HistoricalRegionDetailRespo
 
 
 @router.get("/national", response_model=HistoricalPovertyResponse)
-async def get_historical_national_data() -> HistoricalPovertyResponse:
+def get_historical_national_data() -> HistoricalPovertyResponse:
     """Get national-level historical poverty data across all years."""
     records = get_historical_national()
     return HistoricalPovertyResponse(count=len(records), records=records)

@@ -36,3 +36,26 @@ models:
           - accepted_values:
               arguments:
                 values: ['national', 'region', 'province']
+  - name: stg_municipal_poverty_estimates
+    description: >
+      Cleaned and typed HDX municipal poverty estimates.
+      Handles "-" and empty missing values with nullif, casts metrics to FLOAT64.
+      Normalizes double-space municipality names with regexp_replace.
+      Casts prelim_2012 to BOOLEAN.
+    columns:
+      - name: pcode
+        description: Philippine Standard Geographic Code.
+        tests:
+          - not_null
+      - name: region
+        description: Region name.
+        tests:
+          - not_null
+      - name: province
+        description: Province name.
+        tests:
+          - not_null
+      - name: municipality_city
+        description: Municipality or city name (whitespace-normalized).
+        tests:
+          - not_null

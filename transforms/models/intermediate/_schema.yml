@@ -48,3 +48,35 @@ models:
         description: Poverty incidence among families (%).
       - name: magnitude_poor_families
         description: Number of poor families.
+  - name: int_municipal_poverty_by_year
+    description: >
+      Unpivoted municipal poverty data in long format.
+      One row per municipality per year (2006, 2009, 2012).
+      CI columns are NULL for 2006 and 2009 (only available for 2012).
+    columns:
+      - name: pcode
+        description: Philippine Standard Geographic Code.
+        tests:
+          - not_null
+      - name: region
+        description: Region name.
+        tests:
+          - not_null
+      - name: province
+        description: Province name.
+        tests:
+          - not_null
+      - name: municipality_city
+        description: Municipality or city name.
+        tests:
+          - not_null
+      - name: year
+        description: Survey year.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [2006, 2009, 2012]
+                quote: false
+      - name: poverty_incidence_pct
+        description: Poverty incidence estimate (%).
