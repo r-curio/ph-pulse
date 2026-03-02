@@ -39,6 +39,6 @@ def ingest() -> int:
     Returns:
         Number of rows loaded.
     """
-    df = pd.read_csv(CSV_FILE, dtype=str)
+    df = pd.read_csv(CSV_FILE, dtype=str, encoding="cp1252")
     df = df.rename(columns=COLUMN_RENAME)
     return load_dataframe(df, TABLE_ID, schema=RAW_SCHEMA)

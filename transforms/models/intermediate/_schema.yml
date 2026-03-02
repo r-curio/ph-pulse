@@ -77,5 +77,6 @@ models:
           - accepted_values:
               arguments:
                 values: [2006, 2009, 2012]
+                quote: false
       - name: poverty_incidence_pct
         description: Poverty incidence estimate (%).

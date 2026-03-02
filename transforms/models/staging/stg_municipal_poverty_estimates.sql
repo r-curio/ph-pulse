@@ -7,7 +7,10 @@ with source as (
 cleaned as (
 
     select
-        trim(pcode) as pcode,
+        coalesce(
+            nullif(trim(pcode), ''),
+            concat('UNKNOWN_', trim(province), '_', regexp_replace(trim(municipality_city), r'\s+', '_'))
+        ) as pcode,
         trim(region) as region,
         trim(province) as province,
         regexp_replace(trim(municipality_city), r'\s+', ' ')
