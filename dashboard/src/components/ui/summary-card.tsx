@@ -43,10 +43,12 @@ export function SummaryCard({ record, previousRecord }: SummaryCardProps) {
   }
 
   return (
-    <Card>
+    <Card className="border-none bg-white text-gray-900 shadow">
       <CardHeader>
-        <CardDescription>{record.year}</CardDescription>
-        <CardTitle className="text-3xl font-bold">
+        <CardDescription className="text-sm font-medium text-gray-500">
+          {record.year}
+        </CardDescription>
+        <CardTitle className="text-3xl font-bold text-gray-900">
           {rate !== null ? `${rate}%` : "N/A"}
         </CardTitle>
       </CardHeader>
@@ -56,7 +58,7 @@ export function SummaryCard({ record, previousRecord }: SummaryCardProps) {
             {trendArrow} {trendLabel} vs {previousRecord?.year}
           </p>
         )}
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs text-gray-400">
           National Poverty Incidence (Families)
         </p>
       </CardContent>

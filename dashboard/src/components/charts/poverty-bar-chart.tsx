@@ -52,12 +52,14 @@ export function PovertyBarChart({ records }: PovertyBarChartProps) {
   }));
 
   return (
-    <Card>
+    <Card className="border-none bg-white text-gray-900 shadow">
       <CardHeader>
-        <CardTitle>Poverty Incidence by Region (2023)</CardTitle>
+        <CardTitle className="text-lg font-semibold text-gray-900">
+          Poverty Incidence by Region (2023)
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="min-h-[500px] w-full">
+        <ChartContainer config={chartConfig} className="aspect-auto h-[600px] w-full">
           <BarChart data={data} layout="vertical" margin={{ left: 140, right: 20 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis type="number" unit="%" />
@@ -76,7 +78,7 @@ export function PovertyBarChart({ records }: PovertyBarChartProps) {
             </Bar>
           </BarChart>
         </ChartContainer>
-        <div className="mt-4 flex gap-4 text-xs text-muted-foreground">
+        <div className="mt-4 flex gap-4 text-xs text-gray-500">
           <span className="flex items-center gap-1">
             <span className="inline-block h-3 w-3 rounded bg-red-600" /> High
             (&ge;20%)

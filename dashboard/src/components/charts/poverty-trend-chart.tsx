@@ -37,9 +37,11 @@ export function PovertyTrendChart({ records }: PovertyTrendChartProps) {
   }));
 
   return (
-    <Card>
+    <Card className="border-none bg-white text-gray-900 shadow">
       <CardHeader>
-        <CardTitle>National Poverty Trend</CardTitle>
+        <CardTitle className="text-lg font-semibold text-gray-900">
+          National Poverty Trend
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
