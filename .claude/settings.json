@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(dbt run:*)",
+      "Bash(dbt test:*)",
+      "Bash(dbt docs:*)",
+      "Bash(dbt init:*)",
+      "Bash(python ingestion/*)",
+      "Bash(python ml/*)",
+      "Bash(uvicorn:*)",
+      "Bash(pip install:*)",
+      "Bash(npm install:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git branch:*)",
+      "Read",
+      "Write",
+      "Glob",
+      "Grep"
+    ],
+    "deny": [
+      "Bash(rm -rf /*)",
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)"
+    ]
+  }
+}
