@@ -11,6 +11,10 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+.python-version
+
+# Local CSV data
+ingestion/data/
 
 # Node
 node_modules/
@@ -22,6 +26,7 @@ dist/
 transforms/target/
 transforms/dbt_packages/
 transforms/logs/
+logs/
 
 # OS
 .DS_Store
