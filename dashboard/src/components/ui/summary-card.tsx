@@ -1,4 +1,11 @@
 import type { RegionalPovertyRecord } from "@/lib/types";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface SummaryCardProps {
   /** National poverty record for a single year. */
@@ -16,7 +23,7 @@ export function SummaryCard({ record, previousRecord }: SummaryCardProps) {
   const prevRate = previousRecord?.poverty_incidence_pct;
 
   let trendArrow = "";
-  let trendColor = "text-gray-500";
+  let trendColor = "text-muted-foreground";
   let trendLabel = "";
 
   if (rate !== null && prevRate !== null && prevRate !== undefined) {
@@ -36,19 +43,23 @@ export function SummaryCard({ record, previousRecord }: SummaryCardProps) {
   }
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow">
-      <p className="text-sm font-medium text-gray-500">{record.year}</p>
-      <p className="mt-1 text-3xl font-bold text-gray-900">
-        {rate !== null ? `${rate}%` : "N/A"}
-      </p>
-      {trendLabel && (
-        <p className={`mt-1 text-sm font-medium ${trendColor}`}>
-          {trendArrow} {trendLabel} vs {previousRecord?.year}
+    <Card>
+      <CardHeader>
+        <CardDescription>{record.year}</CardDescription>
+        <CardTitle className="text-3xl font-bold">
+          {rate !== null ? `${rate}%` : "N/A"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {trendLabel && (
+          <p className={`text-sm font-medium ${trendColor}`}>
+            {trendArrow} {trendLabel} vs {previousRecord?.year}
+          </p>
+        )}
+        <p className="mt-1 text-xs text-muted-foreground">
+          National Poverty Incidence (Families)
         </p>
-      )}
-      <p className="mt-2 text-xs text-gray-400">
-        National Poverty Incidence (Families)
-      </p>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
