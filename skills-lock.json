@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "fastapi-expert": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "computedHash": "b445b45fd23883d030fbd39489a9fdee7a7520c58732b544c27ab788b0e70f7e"
+    },
+    "nextjs-best-practices": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "computedHash": "7b31199cce0f9a1b17acdf880469b0f9ddf9eb63577b1fde567def461d888287"
+    }
+  }
+}
