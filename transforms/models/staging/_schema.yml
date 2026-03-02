@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: stg_poverty_incidence_families
+    description: >
+      Cleaned and typed PSA poverty incidence data.
+      Parses geolocation hierarchy (national/region/province) from leading dots.
+      Replaces ".." missing values with NULL and casts metrics to FLOAT64.
+    columns:
+      - name: geo_name
+        description: Geographic area name with leading dots stripped.
+        tests:
+          - not_null
+      - name: geo_level
+        description: "Hierarchy level: national, region, or province."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['national', 'region', 'province']
