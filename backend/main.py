@@ -1,9 +1,14 @@
 """PH-Pulse FastAPI backend."""
 
+from pathlib import Path
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.routers import poverty
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+from backend.routers import historical_poverty, poverty
 
 app = FastAPI(title="PH-Pulse API", version="0.1.0")
 
@@ -16,6 +21,7 @@ app.add_middleware(
 )
 
 app.include_router(poverty.router)
+app.include_router(historical_poverty.router)
 
 
 @app.get("/health")

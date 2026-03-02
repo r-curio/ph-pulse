@@ -28,3 +28,31 @@ models:
           - accepted_values:
               arguments:
                 values: ['High', 'Medium', 'Low']
+  - name: mart_poverty_families_5yr_summary
+    description: >
+      Final mart with 5-year historical regional and national poverty data
+      in long format. Includes year-over-year changes for poverty incidence
+      and magnitude of poor families, plus poverty tier classification.
+      Materialized as a TABLE for dashboard consumption.
+    columns:
+      - name: geo_name
+        description: Geographic area name.
+        tests:
+          - not_null
+      - name: geo_level
+        description: "Hierarchy level: national or region."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['national', 'region']
+      - name: year
+        description: Survey year.
+        tests:
+          - not_null
+      - name: poverty_tier
+        description: "Classification: High (>=20%), Medium (>=10%), Low (<10%)."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['High', 'Medium', 'Low']

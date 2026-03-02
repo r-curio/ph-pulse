@@ -23,3 +23,28 @@ models:
           - not_null
       - name: poverty_incidence_pct
         description: Poverty incidence among families (%).
+  - name: int_poverty_families_5yr_by_region
+    description: >
+      Unpivoted 5-year historical poverty data in long format for national
+      and regional entries. One row per geo_name per year (1991, 2006, 2009, 2012, 2015).
+      Includes magnitude of poor families.
+    columns:
+      - name: geo_name
+        description: Geographic area name.
+        tests:
+          - not_null
+      - name: geo_level
+        description: "Hierarchy level: national or region."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['national', 'region']
+      - name: year
+        description: Survey year.
+        tests:
+          - not_null
+      - name: poverty_incidence_pct
+        description: Poverty incidence among families (%).
+      - name: magnitude_poor_families
+        description: Number of poor families.
