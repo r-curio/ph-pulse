@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   MunicipalPovertyRecord,
   MunicipalTopBottomResponse,
@@ -35,6 +35,8 @@ export function MunicipalDashboard({
 }: MunicipalDashboardProps) {
   /* All hooks declared at the top of the component body. */
   const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedMunicipality, setSelectedMunicipality] = useState("");
   const [selectedYear, setSelectedYear] = useState(2012);
   const [records, setRecords] =
     useState<MunicipalPovertyRecord[]>(initialRecords);
@@ -69,15 +71,36 @@ export function MunicipalDashboard({
   const handleRegionChange = useCallback(
     async (region: string) => {
       setSelectedRegion(region);
+      setSelectedProvince("");
+      setSelectedMunicipality("");
       await fetchData(region, selectedYear);
     },
     [fetchData, selectedYear]
+  );
+
+  /** Handle province change (client-side filter only). */
+  const handleProvinceChange = useCallback(
+    (province: string) => {
+      setSelectedProvince(province);
+      setSelectedMunicipality("");
+    },
+    []
+  );
+
+  /** Handle municipality change (client-side filter only). */
+  const handleMunicipalityChange = useCallback(
+    (municipality: string) => {
+      setSelectedMunicipality(municipality);
+    },
+    []
   );
 
   /** Handle year change. */
   const handleYearChange = useCallback(
     async (year: number) => {
       setSelectedYear(year);
+      setSelectedProvince("");
+      setSelectedMunicipality("");
       await fetchData(selectedRegion, year);
     },
     [fetchData, selectedRegion]
@@ -111,8 +134,41 @@ export function MunicipalDashboard({
     };
   }, [topBottom.top]);
 
+  /** Derive province names from current records. */
+  const provinceNames = useMemo(
+    () => [...new Set(records.map((r) => r.province))].sort(),
+    [records]
+  );
+
+  /** Filter records by province first, then derive municipalities from that. */
+  const recordsAfterProvince = useMemo(
+    () =>
+      selectedProvince
+        ? records.filter((r) => r.province === selectedProvince)
+        : records,
+    [records, selectedProvince]
+  );
+
+  /** Derive municipality names from province-filtered records. */
+  const municipalityNames = useMemo(
+    () =>
+      [...new Set(recordsAfterProvince.map((r) => r.municipality_city))].sort(),
+    [recordsAfterProvince]
+  );
+
+  /** Filter records by selected municipality (client-side). */
+  const filteredRecords = useMemo(
+    () =>
+      selectedMunicipality
+        ? recordsAfterProvince.filter(
+            (r) => r.municipality_city === selectedMunicipality
+          )
+        : recordsAfterProvince,
+    [recordsAfterProvince, selectedMunicipality]
+  );
+
   /* Compute summary stats (derived values, not hooks). */
-  const validRecords = records.filter(
+  const validRecords = filteredRecords.filter(
     (r) => r.poverty_incidence_pct != null
   );
   const totalMunicipalities = validRecords.length;
@@ -142,9 +198,15 @@ export function MunicipalDashboard({
       <section className="mb-8">
         <MunicipalFilters
           regions={regions}
+          provinces={provinceNames}
+          municipalities={municipalityNames}
           selectedRegion={selectedRegion}
+          selectedProvince={selectedProvince}
+          selectedMunicipality={selectedMunicipality}
           selectedYear={selectedYear}
           onRegionChange={handleRegionChange}
+          onProvinceChange={handleProvinceChange}
+          onMunicipalityChange={handleMunicipalityChange}
           onYearChange={handleYearChange}
         />
       </section>
@@ -197,7 +259,7 @@ export function MunicipalDashboard({
 
       {/* Data Table */}
       <section>
-        <MunicipalDataTable records={records} />
+        <MunicipalDataTable records={filteredRecords} />
       </section>
     </div>
   );

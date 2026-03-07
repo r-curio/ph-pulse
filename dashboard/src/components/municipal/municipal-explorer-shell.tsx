@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   MunicipalPovertyRecord,
   MunicipalTopBottomResponse,
@@ -31,11 +31,12 @@ export function MunicipalExplorerShell({
   initialTopBottom: _initialTopBottom,
 }: MunicipalExplorerShellProps) {
   const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedMunicipality, setSelectedMunicipality] = useState("");
   const [selectedYear, setSelectedYear] = useState(2012);
   const [records, setRecords] = useState(initialRecords);
   const [loading, setLoading] = useState(false);
 
-  /** Fetch municipalities when filters change via server action. */
+  /** Fetch municipalities when region/year change via server action. */
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -53,25 +54,47 @@ export function MunicipalExplorerShell({
     fetchData();
   }, [fetchData]);
 
-  /** Compute KPI values from current records. */
-  const totalMunicipalities = records.length;
+  /** Derive municipality names from current records for the dropdown. */
+  const municipalityNames = useMemo(
+    () =>
+      [...new Set(records.map((r) => r.municipality_city))].sort(),
+    [records]
+  );
+
+  /** Filter records by selected municipality (client-side). */
+  const filteredRecords = useMemo(
+    () =>
+      selectedMunicipality
+        ? records.filter((r) => r.municipality_city === selectedMunicipality)
+        : records,
+    [records, selectedMunicipality]
+  );
+
+  /** Compute KPI values from filtered records. */
+  const totalMunicipalities = filteredRecords.length;
   const avgIncidence =
-    records.length > 0
-      ? records.reduce(
+    filteredRecords.length > 0
+      ? filteredRecords.reduce(
           (sum, r) => sum + (r.poverty_incidence_pct ?? 0),
           0
-        ) / records.length
+        ) / filteredRecords.length
       : 0;
-  const highTierCount = records.filter(
+  const highTierCount = filteredRecords.filter(
     (r) => r.poverty_tier === "High"
   ).length;
 
   const handleRegionChange = (region: string) => {
     setSelectedRegion(region);
+    setSelectedMunicipality("");
+  };
+
+  const handleMunicipalityChange = (municipality: string) => {
+    setSelectedMunicipality(municipality);
   };
 
   const handleYearChange = (year: number) => {
     setSelectedYear(year);
+    setSelectedMunicipality("");
   };
 
   return (
@@ -100,9 +123,12 @@ export function MunicipalExplorerShell({
       {/* Filters */}
       <MunicipalFilters
         regions={regions}
+        municipalities={municipalityNames}
         selectedRegion={selectedRegion}
+        selectedMunicipality={selectedMunicipality}
         selectedYear={selectedYear}
         onRegionChange={handleRegionChange}
+        onMunicipalityChange={handleMunicipalityChange}
         onYearChange={handleYearChange}
       />
 
@@ -117,12 +143,12 @@ export function MunicipalExplorerShell({
       )}
 
       {/* Distribution histogram */}
-      {!loading && records.length > 0 && (
-        <DistributionHistogram records={records} />
+      {!loading && filteredRecords.length > 0 && (
+        <DistributionHistogram records={filteredRecords} />
       )}
 
       {/* Data table */}
-      {!loading && <MunicipalDataTable records={records} />}
+      {!loading && <MunicipalDataTable records={filteredRecords} />}
     </div>
   );
 }
