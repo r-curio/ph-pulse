@@ -8,7 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from backend.routers import historical_poverty, municipal_poverty, pipeline, poverty
+from backend.routers import (
+    forecast,
+    historical_poverty,
+    municipal_poverty,
+    pipeline,
+    poverty,
+)
 
 app = FastAPI(title="PH-Pulse API", version="0.1.0")
 
@@ -24,6 +30,7 @@ app.include_router(poverty.router)
 app.include_router(historical_poverty.router)
 app.include_router(municipal_poverty.router)
 app.include_router(pipeline.router)
+app.include_router(forecast.router)
 
 
 @app.get("/health")
