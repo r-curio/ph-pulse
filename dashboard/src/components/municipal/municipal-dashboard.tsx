@@ -3,14 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import type {
   MunicipalPovertyRecord,
-  MunicipalPovertyResponse,
   MunicipalTopBottomResponse,
 } from "@/lib/types";
 import {
-  fetchMunicipalMunicipalities,
-  fetchMunicipalTopBottom,
-  fetchMunicipalTrend,
-} from "@/lib/api";
+  getMunicipalData,
+  getMunicipalTrends,
+} from "@/app/municipal/actions";
 import { HistoricalSummaryCard } from "@/components/ui/historical-summary-card";
 import { MunicipalFilters } from "@/components/municipal/municipal-filters";
 import { MunicipalDataTable } from "@/components/municipal/municipal-data-table";
@@ -47,25 +45,17 @@ export function MunicipalDashboard({
     []
   );
 
-  /** Fetch filtered data whenever filters change. */
+  /** Fetch filtered data whenever filters change via server action. */
   const fetchData = useCallback(
     async (region: string, year: number) => {
       setLoading(true);
       try {
-        const [municipalitiesData, topBottomData]: [
-          MunicipalPovertyResponse,
-          MunicipalTopBottomResponse,
-        ] = await Promise.all([
-          fetchMunicipalMunicipalities({
-            region: region || undefined,
-            year,
-          }),
-          fetchMunicipalTopBottom(year, {
-            region: region || undefined,
-          }),
-        ]);
-        setRecords(municipalitiesData.records);
-        setTopBottom(topBottomData);
+        const { municipalities, topBottom: tb } = await getMunicipalData(
+          region,
+          year
+        );
+        setRecords(municipalities.records);
+        setTopBottom(tb);
       } catch (err) {
         console.error("Failed to fetch municipal data:", err);
       } finally {
@@ -105,10 +95,8 @@ export function MunicipalDashboard({
           return;
         }
 
-        /* Fetch individual trends for top 5 municipalities (small queries). */
-        const trendResults = await Promise.all(
-          topPcodes.map((pcode) => fetchMunicipalTrend(pcode))
-        );
+        /* Fetch individual trends for top 5 municipalities via server action. */
+        const trendResults = await getMunicipalTrends(topPcodes);
         if (ignore) return;
 
         setTrendRecords(trendResults.flatMap((r) => r.records));

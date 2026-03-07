@@ -5,7 +5,7 @@ import type {
   MunicipalPovertyRecord,
   MunicipalTopBottomResponse,
 } from "@/lib/types";
-import { fetchMunicipalMunicipalities } from "@/lib/api";
+import { getMunicipalData } from "@/app/municipal/actions";
 import { CompactKpiCard } from "@/components/ui/compact-kpi-card";
 import { MunicipalFilters } from "@/components/municipal/municipal-filters";
 import { DistributionHistogram } from "@/components/charts/distribution-histogram";
@@ -35,17 +35,15 @@ export function MunicipalExplorerShell({
   const [records, setRecords] = useState(initialRecords);
   const [loading, setLoading] = useState(false);
 
-  /** Fetch municipalities when filters change. */
+  /** Fetch municipalities when filters change via server action. */
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const params: { region?: string; year?: number } = {
-        year: selectedYear,
-      };
-      if (selectedRegion) params.region = selectedRegion;
-
-      const result = await fetchMunicipalMunicipalities(params);
-      setRecords(result.records);
+      const { municipalities } = await getMunicipalData(
+        selectedRegion,
+        selectedYear
+      );
+      setRecords(municipalities.records);
     } finally {
       setLoading(false);
     }
