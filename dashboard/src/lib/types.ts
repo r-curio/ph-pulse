@@ -102,3 +102,30 @@ export interface PipelineStatusResponse {
   checked_at: string;
   tables: TableStatus[];
 }
+
+/** Single row from ml_poverty_forecasts. */
+export interface ForecastRecord {
+  region_name: string;
+  year: number;
+  predicted_poverty_pct: number;
+  model_type: string;
+  trained_on_years: string;
+  r_squared: number;
+}
+
+/** List response for forecast data. */
+export interface ForecastResponse {
+  count: number;
+  records: ForecastRecord[];
+}
+
+/** KPI summary from 2026 forecast predictions. */
+export interface ForecastSummaryResponse {
+  national_avg_2026: number;
+  best_region: string;
+  best_region_pct: number;
+  worst_region: string;
+  worst_region_pct: number;
+  avg_r_squared: number;
+  regions_count: number;
+}

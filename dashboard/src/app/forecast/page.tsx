@@ -1,11 +1,21 @@
-import { ForecastStub } from "@/components/forecast/forecast-stub";
+import { ForecastKpiStrip } from "@/components/forecast/forecast-kpi-strip";
+import { ForecastChart } from "@/components/forecast/forecast-chart";
+import { ForecastTable } from "@/components/forecast/forecast-table";
 import { PageTransition } from "@/components/layout/page-transition";
+import { fetchForecasts, fetchForecastRegions } from "@/lib/api";
+
+export const dynamic = "force-dynamic";
 
 /**
- * Poverty Forecast page — displays mock forecast chart
- * until scikit-learn ML integration is complete.
+ * Poverty Forecast page - displays KPI summary, interactive chart,
+ * and sortable table of regional poverty forecasts (2024-2026).
  */
-export default function ForecastPage() {
+export default async function ForecastPage() {
+  const [forecastData, regions] = await Promise.all([
+    fetchForecasts(),
+    fetchForecastRegions(),
+  ]);
+
   return (
     <PageTransition>
       <header className="mb-6">
@@ -16,11 +26,20 @@ export default function ForecastPage() {
           Poverty Forecast
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Projected national poverty incidence using linear regression models
+          Projected regional poverty incidence using linear regression models
+          (2024-2026)
         </p>
       </header>
 
-      <ForecastStub />
+      <ForecastKpiStrip />
+
+      <div className="mt-6">
+        <ForecastChart records={forecastData.records} regions={regions} />
+      </div>
+
+      <div className="mt-6">
+        <ForecastTable records={forecastData.records} />
+      </div>
     </PageTransition>
   );
 }
