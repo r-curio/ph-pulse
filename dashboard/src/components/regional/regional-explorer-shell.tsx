@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import type { RegionalPovertyRecord, HistoricalPovertyRecord } from "@/lib/types";
-import { fetchRegionDetail, fetchHistoricalRegionDetail } from "@/lib/api";
+import { getRegionDetails } from "@/app/regional/actions";
 import { RegionTable } from "./region-table";
 import { RegionDetailPanel } from "./region-detail-panel";
 
@@ -52,12 +52,9 @@ export function RegionalExplorerShell({
 
   const fetchDetails = useCallback(async (regionName: string) => {
     try {
-      const [detail, historical] = await Promise.all([
-        fetchRegionDetail(regionName),
-        fetchHistoricalRegionDetail(regionName),
-      ]);
-      setDetailRecords(detail.records);
-      setHistoricalRecords(historical.records);
+      const { detail, historical } = await getRegionDetails(regionName);
+      setDetailRecords(detail);
+      setHistoricalRecords(historical);
     } catch (err) {
       console.error("Failed to fetch region details:", err);
       setDetailRecords([]);
