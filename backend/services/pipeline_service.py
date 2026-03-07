@@ -10,9 +10,25 @@ MONITORED_TABLES = [
     ("ph_pulse_raw", "raw_poverty_incidence", "raw", "Regional Poverty (raw)"),
     ("ph_pulse_raw", "raw_poverty_families_5yr", "raw", "Historical Poverty (raw)"),
     ("ph_pulse_raw", "raw_municipal_poverty", "raw", "Municipal Poverty (raw)"),
-    ("ph_pulse_marts", "mart_regional_poverty_summary", "mart", "Regional Poverty (mart)"),
-    ("ph_pulse_marts", "mart_poverty_families_5yr_summary", "mart", "Historical Poverty (mart)"),
-    ("ph_pulse_marts", "mart_municipal_poverty_summary", "mart", "Municipal Poverty (mart)"),
+    (
+        "ph_pulse_marts",
+        "mart_regional_poverty_summary",
+        "mart",
+        "Regional Poverty (mart)",
+    ),
+    (
+        "ph_pulse_marts",
+        "mart_poverty_families_5yr_summary",
+        "mart",
+        "Historical Poverty (mart)",
+    ),
+    (
+        "ph_pulse_marts",
+        "mart_municipal_poverty_summary",
+        "mart",
+        "Municipal Poverty (mart)",
+    ),
+    ("ph_pulse", "ml_poverty_forecasts", "ml", "Poverty Forecasts (ML)"),
 ]
 
 STALE_THRESHOLD_DAYS = 30
@@ -51,7 +67,9 @@ def _fetch_dataset_metadata(
     Returns:
         Mapping of table_id to {"row_count": int, "last_modified_time": int}.
     """
-    query = f"SELECT table_id, row_count, last_modified_time FROM `{dataset_id}.__TABLES__`"
+    query = (
+        f"SELECT table_id, row_count, last_modified_time FROM `{dataset_id}.__TABLES__`"
+    )
     try:
         rows = client.query(query).result()
     except Exception:
@@ -66,9 +84,7 @@ def _fetch_dataset_metadata(
     return result
 
 
-def _determine_health(
-    row_count: int | None, last_modified: datetime | None
-) -> str:
+def _determine_health(row_count: int | None, last_modified: datetime | None) -> str:
     """Determine table health based on row count and freshness.
 
     Args:
