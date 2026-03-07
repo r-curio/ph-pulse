@@ -5,10 +5,7 @@ import type {
   MunicipalPovertyRecord,
   MunicipalTopBottomResponse,
 } from "@/lib/types";
-import {
-  fetchMunicipalMunicipalities,
-  fetchMunicipalProvinces,
-} from "@/lib/api";
+import { fetchMunicipalMunicipalities } from "@/lib/api";
 import { CompactKpiCard } from "@/components/ui/compact-kpi-card";
 import { MunicipalFilters } from "@/components/municipal/municipal-filters";
 import { DistributionHistogram } from "@/components/charts/distribution-histogram";
@@ -34,48 +31,25 @@ export function MunicipalExplorerShell({
   initialTopBottom: _initialTopBottom,
 }: MunicipalExplorerShellProps) {
   const [selectedRegion, setSelectedRegion] = useState("");
-  const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedYear, setSelectedYear] = useState(2012);
-  const [provinces, setProvinces] = useState<string[]>([]);
   const [records, setRecords] = useState(initialRecords);
   const [loading, setLoading] = useState(false);
-
-  /** Fetch provinces when region changes. */
-  useEffect(() => {
-    if (!selectedRegion) {
-      setProvinces([]);
-      setSelectedProvince("");
-      return;
-    }
-
-    let cancelled = false;
-    fetchMunicipalProvinces(selectedRegion).then((data) => {
-      if (!cancelled) {
-        setProvinces(data);
-        setSelectedProvince("");
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedRegion]);
 
   /** Fetch municipalities when filters change. */
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const params: { region?: string; province?: string; year?: number } = {
+      const params: { region?: string; year?: number } = {
         year: selectedYear,
       };
       if (selectedRegion) params.region = selectedRegion;
-      if (selectedProvince) params.province = selectedProvince;
 
       const result = await fetchMunicipalMunicipalities(params);
       setRecords(result.records);
     } finally {
       setLoading(false);
     }
-  }, [selectedRegion, selectedProvince, selectedYear]);
+  }, [selectedRegion, selectedYear]);
 
   useEffect(() => {
     fetchData();
@@ -96,10 +70,6 @@ export function MunicipalExplorerShell({
 
   const handleRegionChange = (region: string) => {
     setSelectedRegion(region);
-  };
-
-  const handleProvinceChange = (province: string) => {
-    setSelectedProvince(province);
   };
 
   const handleYearChange = (year: number) => {
@@ -132,12 +102,9 @@ export function MunicipalExplorerShell({
       {/* Filters */}
       <MunicipalFilters
         regions={regions}
-        provinces={provinces}
         selectedRegion={selectedRegion}
-        selectedProvince={selectedProvince}
         selectedYear={selectedYear}
         onRegionChange={handleRegionChange}
-        onProvinceChange={handleProvinceChange}
         onYearChange={handleYearChange}
       />
 

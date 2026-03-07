@@ -11,7 +11,6 @@ interface MunicipalDataTableProps {
 
 type SortKey =
   | "municipality_city"
-  | "province"
   | "poverty_incidence_pct"
   | "poverty_tier";
 type SortDir = "asc" | "desc";
@@ -84,10 +83,8 @@ export function MunicipalDataTable({ records }: MunicipalDataTableProps) {
     // Text search
     if (search.trim()) {
       const q = search.trim().toLowerCase();
-      filtered = filtered.filter(
-        (r) =>
-          r.municipality_city.toLowerCase().includes(q) ||
-          r.province.toLowerCase().includes(q)
+      filtered = filtered.filter((r) =>
+        r.municipality_city.toLowerCase().includes(q)
       );
     }
 
@@ -128,7 +125,7 @@ export function MunicipalDataTable({ records }: MunicipalDataTableProps) {
       <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
         <input
           type="text"
-          placeholder="Search municipality or province..."
+          placeholder="Search municipality..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -172,15 +169,6 @@ export function MunicipalDataTable({ records }: MunicipalDataTableProps) {
                 Municipality{arrow("municipality_city")}
               </th>
               <th
-                className="cursor-pointer px-3 py-2.5 hover:text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                onClick={() => handleSort("province")}
-                onKeyDown={(e) => handleKeyDown("province", e)}
-                tabIndex={0}
-                aria-sort={ariaSort(sortKey, "province", sortDir)}
-              >
-                Province{arrow("province")}
-              </th>
-              <th
                 className="cursor-pointer px-3 py-2.5 text-right hover:text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 onClick={() => handleSort("poverty_incidence_pct")}
                 onKeyDown={(e) =>
@@ -222,9 +210,6 @@ export function MunicipalDataTable({ records }: MunicipalDataTableProps) {
                   <td className="px-3 py-2 font-medium text-foreground">
                     {r.municipality_city}
                   </td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {r.province}
-                  </td>
                   <td className="relative px-3 py-2 text-right text-foreground">
                     {/* Inline spark bar */}
                     <span
@@ -254,7 +239,7 @@ export function MunicipalDataTable({ records }: MunicipalDataTableProps) {
             {processed.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={5}
                   className="px-3 py-8 text-center text-muted-foreground"
                 >
                   No records found for the selected filters.

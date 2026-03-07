@@ -8,7 +8,6 @@ import type {
 } from "@/lib/types";
 import {
   fetchMunicipalMunicipalities,
-  fetchMunicipalProvinces,
   fetchMunicipalTopBottom,
   fetchMunicipalTrend,
 } from "@/lib/api";
@@ -38,9 +37,7 @@ export function MunicipalDashboard({
 }: MunicipalDashboardProps) {
   /* All hooks declared at the top of the component body. */
   const [selectedRegion, setSelectedRegion] = useState("");
-  const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedYear, setSelectedYear] = useState(2012);
-  const [provinces, setProvinces] = useState<string[]>([]);
   const [records, setRecords] =
     useState<MunicipalPovertyRecord[]>(initialRecords);
   const [topBottom, setTopBottom] =
@@ -52,7 +49,7 @@ export function MunicipalDashboard({
 
   /** Fetch filtered data whenever filters change. */
   const fetchData = useCallback(
-    async (region: string, province: string, year: number) => {
+    async (region: string, year: number) => {
       setLoading(true);
       try {
         const [municipalitiesData, topBottomData]: [
@@ -61,12 +58,10 @@ export function MunicipalDashboard({
         ] = await Promise.all([
           fetchMunicipalMunicipalities({
             region: region || undefined,
-            province: province || undefined,
             year,
           }),
           fetchMunicipalTopBottom(year, {
             region: region || undefined,
-            province: province || undefined,
           }),
         ]);
         setRecords(municipalitiesData.records);
@@ -80,52 +75,22 @@ export function MunicipalDashboard({
     []
   );
 
-  /** Fetch provinces reactively when selectedRegion changes. */
-  useEffect(() => {
-    if (!selectedRegion) {
-      setProvinces([]);
-      return;
-    }
-    let ignore = false;
-    fetchMunicipalProvinces(selectedRegion)
-      .then((data) => {
-        if (!ignore) setProvinces(data);
-      })
-      .catch((err) => {
-        console.error("Failed to load provinces:", err);
-        if (!ignore) setProvinces([]);
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [selectedRegion]);
-
-  /** Handle region change — reset downstream and re-fetch data. */
+  /** Handle region change and re-fetch data. */
   const handleRegionChange = useCallback(
     async (region: string) => {
       setSelectedRegion(region);
-      setSelectedProvince("");
-      await fetchData(region, "", selectedYear);
+      await fetchData(region, selectedYear);
     },
     [fetchData, selectedYear]
-  );
-
-  /** Handle province change. */
-  const handleProvinceChange = useCallback(
-    async (province: string) => {
-      setSelectedProvince(province);
-      await fetchData(selectedRegion, province, selectedYear);
-    },
-    [fetchData, selectedRegion, selectedYear]
   );
 
   /** Handle year change. */
   const handleYearChange = useCallback(
     async (year: number) => {
       setSelectedYear(year);
-      await fetchData(selectedRegion, selectedProvince, year);
+      await fetchData(selectedRegion, year);
     },
-    [fetchData, selectedRegion, selectedProvince]
+    [fetchData, selectedRegion]
   );
 
   /** Load trend data for top municipalities across all years with race-condition cleanup. */
@@ -189,12 +154,9 @@ export function MunicipalDashboard({
       <section className="mb-8">
         <MunicipalFilters
           regions={regions}
-          provinces={provinces}
           selectedRegion={selectedRegion}
-          selectedProvince={selectedProvince}
           selectedYear={selectedYear}
           onRegionChange={handleRegionChange}
-          onProvinceChange={handleProvinceChange}
           onYearChange={handleYearChange}
         />
       </section>
