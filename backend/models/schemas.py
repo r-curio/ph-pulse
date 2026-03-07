@@ -1,5 +1,7 @@
 """Pydantic response models for the poverty API."""
 
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -98,3 +100,22 @@ class MunicipalTopBottomResponse(BaseModel):
     year: int
     top: list[MunicipalPovertyRecord]
     bottom: list[MunicipalPovertyRecord]
+
+
+class TableStatus(BaseModel):
+    """Health status for a single BigQuery table."""
+
+    table_name: str
+    display_name: str
+    layer: str  # "raw" or "mart"
+    row_count: int | None = None
+    last_modified: datetime | None = None
+    health: str  # "healthy" | "stale" | "error"
+
+
+class PipelineStatusResponse(BaseModel):
+    """Overall pipeline health response."""
+
+    overall_health: str  # "healthy" | "stale" | "error"
+    checked_at: datetime
+    tables: list[TableStatus]

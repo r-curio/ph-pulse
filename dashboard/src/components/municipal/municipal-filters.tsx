@@ -23,7 +23,7 @@ const YEARS = [2012, 2009, 2006];
 
 /**
  * Filter bar with cascading Region > Province > Year dropdowns.
- * Selecting a region fetches provinces; selecting "All" resets downstream.
+ * Dark-themed with native selects for the municipal explorer.
  */
 export function MunicipalFilters({
   regions,
@@ -40,7 +40,7 @@ export function MunicipalFilters({
       <div className="flex flex-col gap-1">
         <label
           htmlFor="region-filter"
-          className="text-xs font-medium text-gray-500"
+          className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
         >
           Region
         </label>
@@ -48,7 +48,7 @@ export function MunicipalFilters({
           id="region-filter"
           value={selectedRegion}
           onChange={(e) => onRegionChange(e.target.value)}
-          className="cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="cursor-pointer rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
         >
           <option value="">All Regions</option>
           {regions.map((r) => (
@@ -62,7 +62,7 @@ export function MunicipalFilters({
       <div className="flex flex-col gap-1">
         <label
           htmlFor="province-filter"
-          className="text-xs font-medium text-gray-500"
+          className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
         >
           Province
         </label>
@@ -71,7 +71,7 @@ export function MunicipalFilters({
           value={selectedProvince}
           onChange={(e) => onProvinceChange(e.target.value)}
           disabled={!selectedRegion}
-          className="cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="cursor-pointer rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <option value="">All Provinces</option>
           {provinces.map((p) => (
@@ -85,7 +85,7 @@ export function MunicipalFilters({
       <div className="flex flex-col gap-1">
         <label
           htmlFor="year-filter"
-          className="text-xs font-medium text-gray-500"
+          className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
         >
           Year
         </label>
@@ -93,7 +93,7 @@ export function MunicipalFilters({
           id="year-filter"
           value={selectedYear}
           onChange={(e) => onYearChange(Number(e.target.value))}
-          className="cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="cursor-pointer rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
         >
           {YEARS.map((y) => (
             <option key={y} value={y}>

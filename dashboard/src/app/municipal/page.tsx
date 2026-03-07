@@ -4,7 +4,7 @@ import {
   fetchMunicipalTopBottom,
 } from "@/lib/api";
 import { MunicipalDashboard } from "@/components/municipal/municipal-dashboard";
-import Link from "next/link";
+import { PageTransition } from "@/components/layout/page-transition";
 
 export const dynamic = "force-dynamic";
 
@@ -21,31 +21,24 @@ export default async function MunicipalPage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-            PH-Pulse
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Municipal Poverty Estimates (2006–2012)
-          </p>
-          <Link
-            href="/"
-            className="mt-2 inline-block text-sm text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            &larr; Back to Dashboard
-          </Link>
-        </div>
+    <PageTransition className="px-4 sm:px-6 lg:px-8 py-8">
+      <header className="mb-8">
+        <h1
+          className="text-3xl font-bold text-foreground"
+          style={{ fontFamily: "var(--font-heading)" }}
+        >
+          Municipal Explorer
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Municipal Poverty Estimates (2006–2012)
+        </p>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <MunicipalDashboard
-          regions={regions}
-          initialRecords={municipalitiesData.records}
-          initialTopBottom={topBottomData}
-        />
-      </main>
-    </div>
+      <MunicipalDashboard
+        regions={regions}
+        initialRecords={municipalitiesData.records}
+        initialTopBottom={topBottomData}
+      />
+    </PageTransition>
   );
 }

@@ -1,7 +1,10 @@
 import type {
   HistoricalPovertyResponse,
+  HistoricalRegionDetailResponse,
   MunicipalPovertyResponse,
   MunicipalTopBottomResponse,
+  PipelineStatusResponse,
+  RegionDetailResponse,
   RegionalPovertyResponse,
 } from "./types";
 
@@ -65,6 +68,38 @@ export async function fetchHistoricalNationalPoverty(): Promise<HistoricalPovert
     throw new Error(`Failed to fetch historical national poverty: ${res.status}`);
   }
   return res.json() as Promise<HistoricalPovertyResponse>;
+}
+
+/**
+ * Fetch poverty data for a specific region across all years.
+ */
+export async function fetchRegionDetail(
+  regionName: string
+): Promise<RegionDetailResponse> {
+  const res = await fetch(
+    `${API_URL}/api/v1/poverty/regions/${encodeURIComponent(regionName)}`,
+    { next: { revalidate: 3600 } }
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to fetch region detail: ${res.status}`);
+  }
+  return res.json() as Promise<RegionDetailResponse>;
+}
+
+/**
+ * Fetch historical poverty data for a specific region across all years.
+ */
+export async function fetchHistoricalRegionDetail(
+  regionName: string
+): Promise<HistoricalRegionDetailResponse> {
+  const res = await fetch(
+    `${API_URL}/api/v1/poverty/historical/regions/${encodeURIComponent(regionName)}`,
+    { next: { revalidate: 3600 } }
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to fetch historical region detail: ${res.status}`);
+  }
+  return res.json() as Promise<HistoricalRegionDetailResponse>;
 }
 
 /**
@@ -155,4 +190,17 @@ export async function fetchMunicipalTrend(
     throw new Error(`Failed to fetch municipal trend: ${res.status}`);
   }
   return res.json() as Promise<MunicipalPovertyResponse>;
+}
+
+/**
+ * Fetch overall pipeline health and per-table BigQuery metadata.
+ */
+export async function fetchPipelineStatus(): Promise<PipelineStatusResponse> {
+  const res = await fetch(`${API_URL}/api/v1/pipeline/status`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch pipeline status: ${res.status}`);
+  }
+  return res.json() as Promise<PipelineStatusResponse>;
 }

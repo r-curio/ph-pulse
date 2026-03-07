@@ -30,23 +30,23 @@ export function HistoricalSummaryCard({
   trend,
   trendDirection,
 }: HistoricalSummaryCardProps) {
-  let trendColor = "text-gray-500";
+  let trendColor = "text-muted-foreground";
   let trendArrow = "";
   if (trendDirection === "up") {
-    trendColor = "text-red-600";
+    trendColor = "text-red-400";
     trendArrow = "\u2191";
   } else if (trendDirection === "down") {
-    trendColor = "text-green-600";
+    trendColor = "text-green-400";
     trendArrow = "\u2193";
   }
 
   return (
-    <Card className="border-none bg-white text-gray-900 shadow">
+    <Card className="border border-border bg-card">
       <CardHeader>
-        <CardDescription className="text-sm font-medium text-gray-500">
+        <CardDescription className="text-sm font-medium text-muted-foreground">
           {label}
         </CardDescription>
-        <CardTitle className="text-3xl font-bold text-gray-900">
+        <CardTitle className="text-3xl font-bold text-foreground">
           {value}
         </CardTitle>
       </CardHeader>
@@ -56,7 +56,7 @@ export function HistoricalSummaryCard({
             {trendArrow} {trend}
           </p>
         )}
-        <p className="mt-1 text-xs text-gray-400">{description}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
   );
