@@ -2,30 +2,26 @@
 
 import {
   fetchMunicipalMunicipalities,
-  fetchMunicipalTopBottom,
   fetchMunicipalTrend,
 } from "@/lib/api";
 import type {
+  MunicipalPovertyRecord,
   MunicipalPovertyResponse,
-  MunicipalTopBottomResponse,
 } from "@/lib/types";
 
 /**
- * Server action to fetch filtered municipal data.
+ * Server action to fetch municipal records filtered by region and year.
  * Runs on the Next.js server so it can always reach the backend.
  */
-export async function getMunicipalData(
+export async function getMunicipalRecords(
   region: string,
   year: number
-): Promise<{
-  municipalities: MunicipalPovertyResponse;
-  topBottom: MunicipalTopBottomResponse;
-}> {
-  const [municipalities, topBottom] = await Promise.all([
-    fetchMunicipalMunicipalities({ region: region || undefined, year }),
-    fetchMunicipalTopBottom(year, { region: region || undefined }),
-  ]);
-  return { municipalities, topBottom };
+): Promise<MunicipalPovertyRecord[]> {
+  const result = await fetchMunicipalMunicipalities({
+    region: region || undefined,
+    year,
+  });
+  return result.records;
 }
 
 /**

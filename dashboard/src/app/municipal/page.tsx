@@ -1,7 +1,6 @@
 import {
   fetchMunicipalMunicipalities,
   fetchMunicipalRegions,
-  fetchMunicipalTopBottom,
 } from "@/lib/api";
 import { MunicipalDashboard } from "@/components/municipal/municipal-dashboard";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -14,10 +13,9 @@ export const dynamic = "force-dynamic";
  * and passes it to the client-side MunicipalDashboard.
  */
 export default async function MunicipalPage() {
-  const [regions, municipalitiesData, topBottomData] = await Promise.all([
+  const [regions, municipalitiesData] = await Promise.all([
     fetchMunicipalRegions(),
     fetchMunicipalMunicipalities({ year: 2012 }),
-    fetchMunicipalTopBottom(2012),
   ]);
 
   return (
@@ -37,7 +35,6 @@ export default async function MunicipalPage() {
       <MunicipalDashboard
         regions={regions}
         initialRecords={municipalitiesData.records}
-        initialTopBottom={topBottomData}
       />
     </PageTransition>
   );
