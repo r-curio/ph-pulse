@@ -30,7 +30,6 @@ export function MunicipalDashboard({
   /* All hooks declared at the top of the component body. */
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedProvince, setSelectedProvince] = useState("");
-  const [selectedMunicipality, setSelectedMunicipality] = useState("");
   const [selectedYear, setSelectedYear] = useState(2012);
   const [records, setRecords] =
     useState<MunicipalPovertyRecord[]>(initialRecords);
@@ -60,7 +59,6 @@ export function MunicipalDashboard({
     async (region: string) => {
       setSelectedRegion(region);
       setSelectedProvince("");
-      setSelectedMunicipality("");
       await fetchData(region, selectedYear);
     },
     [fetchData, selectedYear]
@@ -70,15 +68,6 @@ export function MunicipalDashboard({
   const handleProvinceChange = useCallback(
     (province: string) => {
       setSelectedProvince(province);
-      setSelectedMunicipality("");
-    },
-    []
-  );
-
-  /** Handle municipality change (client-side filter only). */
-  const handleMunicipalityChange = useCallback(
-    (municipality: string) => {
-      setSelectedMunicipality(municipality);
     },
     []
   );
@@ -88,7 +77,6 @@ export function MunicipalDashboard({
     async (year: number) => {
       setSelectedYear(year);
       setSelectedProvince("");
-      setSelectedMunicipality("");
       await fetchData(selectedRegion, year);
     },
     [fetchData, selectedRegion]
@@ -109,23 +97,8 @@ export function MunicipalDashboard({
     [records, selectedProvince]
   );
 
-  /** Derive municipality names from province-filtered records. */
-  const municipalityNames = useMemo(
-    () =>
-      [...new Set(recordsAfterProvince.map((r) => r.municipality_city))].sort(),
-    [recordsAfterProvince]
-  );
-
-  /** Filter records by selected municipality (client-side). */
-  const filteredRecords = useMemo(
-    () =>
-      selectedMunicipality
-        ? recordsAfterProvince.filter(
-            (r) => r.municipality_city === selectedMunicipality
-          )
-        : recordsAfterProvince,
-    [recordsAfterProvince, selectedMunicipality]
-  );
+  /** Province-filtered records are the final filtered set. */
+  const filteredRecords = recordsAfterProvince;
 
   /** Derive top/bottom 10 from the currently filtered records. */
   const filteredTop = useMemo(() => {
@@ -201,14 +174,11 @@ export function MunicipalDashboard({
         <MunicipalFilters
           regions={regions}
           provinces={provinceNames}
-          municipalities={municipalityNames}
           selectedRegion={selectedRegion}
           selectedProvince={selectedProvince}
-          selectedMunicipality={selectedMunicipality}
           selectedYear={selectedYear}
           onRegionChange={handleRegionChange}
           onProvinceChange={handleProvinceChange}
-          onMunicipalityChange={handleMunicipalityChange}
           onYearChange={handleYearChange}
         />
       </section>

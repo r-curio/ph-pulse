@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type {
   MunicipalPovertyRecord,
   MunicipalTopBottomResponse,
@@ -31,7 +31,6 @@ export function MunicipalExplorerShell({
   initialTopBottom: _initialTopBottom,
 }: MunicipalExplorerShellProps) {
   const [selectedRegion, setSelectedRegion] = useState("");
-  const [selectedMunicipality, setSelectedMunicipality] = useState("");
   const [selectedYear, setSelectedYear] = useState(2012);
   const [records, setRecords] = useState(initialRecords);
   const [loading, setLoading] = useState(false);
@@ -54,47 +53,25 @@ export function MunicipalExplorerShell({
     fetchData();
   }, [fetchData]);
 
-  /** Derive municipality names from current records for the dropdown. */
-  const municipalityNames = useMemo(
-    () =>
-      [...new Set(records.map((r) => r.municipality_city))].sort(),
-    [records]
-  );
-
-  /** Filter records by selected municipality (client-side). */
-  const filteredRecords = useMemo(
-    () =>
-      selectedMunicipality
-        ? records.filter((r) => r.municipality_city === selectedMunicipality)
-        : records,
-    [records, selectedMunicipality]
-  );
-
-  /** Compute KPI values from filtered records. */
-  const totalMunicipalities = filteredRecords.length;
+  /** Compute KPI values from current records. */
+  const totalMunicipalities = records.length;
   const avgIncidence =
-    filteredRecords.length > 0
-      ? filteredRecords.reduce(
+    records.length > 0
+      ? records.reduce(
           (sum, r) => sum + (r.poverty_incidence_pct ?? 0),
           0
-        ) / filteredRecords.length
+        ) / records.length
       : 0;
-  const highTierCount = filteredRecords.filter(
+  const highTierCount = records.filter(
     (r) => r.poverty_tier === "High"
   ).length;
 
   const handleRegionChange = (region: string) => {
     setSelectedRegion(region);
-    setSelectedMunicipality("");
-  };
-
-  const handleMunicipalityChange = (municipality: string) => {
-    setSelectedMunicipality(municipality);
   };
 
   const handleYearChange = (year: number) => {
     setSelectedYear(year);
-    setSelectedMunicipality("");
   };
 
   return (
@@ -123,12 +100,9 @@ export function MunicipalExplorerShell({
       {/* Filters */}
       <MunicipalFilters
         regions={regions}
-        municipalities={municipalityNames}
         selectedRegion={selectedRegion}
-        selectedMunicipality={selectedMunicipality}
         selectedYear={selectedYear}
         onRegionChange={handleRegionChange}
-        onMunicipalityChange={handleMunicipalityChange}
         onYearChange={handleYearChange}
       />
 
@@ -143,12 +117,12 @@ export function MunicipalExplorerShell({
       )}
 
       {/* Distribution histogram */}
-      {!loading && filteredRecords.length > 0 && (
-        <DistributionHistogram records={filteredRecords} />
+      {!loading && records.length > 0 && (
+        <DistributionHistogram records={records} />
       )}
 
       {/* Data table */}
-      {!loading && <MunicipalDataTable records={filteredRecords} />}
+      {!loading && <MunicipalDataTable records={records} />}
     </div>
   );
 }
