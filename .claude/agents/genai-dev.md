@@ -40,7 +40,7 @@ User question
 - **Lightweight RAG** — query BigQuery → format context → send to Gemini
 - **Data grounding** — model must answer using ONLY provided data, no hallucination
 - **Source transparency** — always return source rows alongside the AI answer
-- **Model** — use `gemini-1.5-flash` via `@google/generative-ai` or `google-generativeai` Python SDK
+- **Model** — use `gemini-2.5-flash-lite` via `google-genai` Python SDK (`from google import genai`)
 - **Prompt safety** — include guardrails against prompt injection and off-topic questions
 - **Token efficiency** — minimize context window usage, summarize large result sets
 
