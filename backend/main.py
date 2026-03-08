@@ -8,7 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from backend.routers import (
+from backend.routers import (  # noqa: E402
+    chat,
     forecast,
     historical_poverty,
     municipal_poverty,
@@ -31,6 +32,7 @@ app.include_router(historical_poverty.router)
 app.include_router(municipal_poverty.router)
 app.include_router(pipeline.router)
 app.include_router(forecast.router)
+app.include_router(chat.router)
 
 
 @app.get("/health")
