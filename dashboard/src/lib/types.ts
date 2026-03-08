@@ -129,3 +129,23 @@ export interface ForecastSummaryResponse {
   avg_r_squared: number;
   regions_count: number;
 }
+
+/** Single message in a chat conversation. */
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/** Data source citation returned alongside a chat answer. */
+export interface SourceInfo {
+  table: string;
+  description: string;
+}
+
+/** SSE event types emitted by the /api/v1/chat/stream endpoint. */
+export type ChatSSEEvent =
+  | { type: "tool_call"; name: string }
+  | { type: "token"; text: string }
+  | { type: "source"; table: string; description: string }
+  | { type: "error"; message: string }
+  | { type: "done" };
