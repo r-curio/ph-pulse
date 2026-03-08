@@ -1,7 +1,7 @@
 "use client";
 
 interface ChatMessage {
-  role: "user" | "bot";
+  role: "user" | "assistant";
   content: string;
 }
 
@@ -11,7 +11,7 @@ const EXAMPLE_MESSAGES: ChatMessage[] = [
     content: "Which region has the highest poverty rate in 2023?",
   },
   {
-    role: "bot",
+    role: "assistant",
     content:
       "Based on the latest data, the Bangsamoro Autonomous Region in Muslim Mindanao (BARMM) has the highest poverty incidence at approximately 39.9% in 2023, which is significantly above the national average.",
   },
@@ -20,7 +20,7 @@ const EXAMPLE_MESSAGES: ChatMessage[] = [
     content: "How does this compare to 2021?",
   },
   {
-    role: "bot",
+    role: "assistant",
     content:
       "In 2021, BARMM's poverty incidence was 40.0%, so there has been a slight improvement of 0.1 percentage points. The national poverty rate also improved from 18.1% in 2021 to 15.5% in 2023.",
   },
