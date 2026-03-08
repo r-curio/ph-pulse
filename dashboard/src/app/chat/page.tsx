@@ -1,9 +1,6 @@
-import { ChatStub } from "@/components/chat/chat-stub";
+import { ChatPanel } from "@/components/chat/chat-panel";
 import { PageTransition } from "@/components/layout/page-transition";
 
-/**
- * AI Chat page — displays a mock chat interface powered by Gemini (coming soon).
- */
 export default function ChatPage() {
   return (
     <PageTransition>
@@ -19,7 +16,7 @@ export default function ChatPage() {
         </p>
       </header>
 
-      <ChatStub />
+      <ChatPanel />
     </PageTransition>
   );
 }
