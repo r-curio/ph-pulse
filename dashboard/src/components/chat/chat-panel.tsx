@@ -263,16 +263,29 @@ export function ChatPanel() {
 
               {/* Source citations */}
               {assistant.sources.length > 0 && !assistant.isStreaming && (
-                <div className="flex flex-wrap gap-1.5">
-                  {assistant.sources.map((src) => (
-                    <span
-                      key={src.table}
-                      className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground"
-                      title={src.description}
-                    >
-                      {src.description}
-                    </span>
-                  ))}
+                <div className="rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
+                  <p className="mb-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                    Sources
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {assistant.sources.map((src) => (
+                      <span
+                        key={src.table}
+                        className="inline-flex items-center gap-1 rounded-md border border-border/50 bg-background px-2 py-0.5 text-xs text-muted-foreground"
+                        title={src.table}
+                      >
+                        <svg
+                          className="h-3 w-3 shrink-0 text-primary/60"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path d="M2 3a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm3 1a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 3a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 3a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H5z" />
+                        </svg>
+                        {src.description}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
