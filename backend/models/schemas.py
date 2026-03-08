@@ -1,8 +1,9 @@
 """Pydantic response models for the poverty API."""
 
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RegionalPovertyRecord(BaseModel):
@@ -149,3 +150,33 @@ class ForecastSummaryResponse(BaseModel):
     worst_region_pct: float
     avg_r_squared: float
     regions_count: int
+
+
+# -- Chat models ---------------------------------------------------------------
+
+
+class ChatMessage(BaseModel):
+    """Single message in a chat conversation."""
+
+    role: Literal["user", "assistant"]
+    content: str = Field(..., min_length=1, max_length=4000)
+
+
+class ChatRequest(BaseModel):
+    """Request body for the chat endpoint."""
+
+    messages: list[ChatMessage] = Field(..., min_length=1, max_length=50)
+
+
+class SourceInfo(BaseModel):
+    """Data source citation for a chat response."""
+
+    table: str
+    description: str
+
+
+class ChatResponse(BaseModel):
+    """Response from the chat endpoint."""
+
+    answer: str
+    sources: list[SourceInfo]

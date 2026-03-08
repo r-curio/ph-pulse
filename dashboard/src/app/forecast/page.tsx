@@ -6,10 +6,6 @@ import { fetchForecasts, fetchForecastRegions } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Poverty Forecast page - displays KPI summary, interactive chart,
- * and sortable table of regional poverty forecasts (2024-2026).
- */
 export default async function ForecastPage() {
   const [forecastData, regions] = await Promise.all([
     fetchForecasts(),
@@ -17,7 +13,7 @@ export default async function ForecastPage() {
   ]);
 
   return (
-    <PageTransition>
+    <PageTransition className="px-4 sm:px-6 lg:px-8 py-8">
       <header className="mb-6">
         <h1
           className="text-2xl font-bold text-foreground"
