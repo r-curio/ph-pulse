@@ -1,4 +1,6 @@
 import type {
+  ChatMessage,
+  ChatSSEEvent,
   ForecastResponse,
   ForecastSummaryResponse,
   HistoricalPovertyResponse,
@@ -254,4 +256,109 @@ export async function fetchForecastRegions(): Promise<string[]> {
     throw new Error(`Failed to fetch forecast regions: ${res.status}`);
   }
   return res.json() as Promise<string[]>;
+}
+/**
+ * Stream a chat response from the backend SSE endpoint.
+ * Parses Server-Sent Events and invokes the callback for each parsed event.
+ *
+ * @param messages - Full conversation history to send.
+ * @param onEvent - Callback invoked for each SSE event.
+ * @param signal - Optional AbortSignal for cancellation.
+ */
+export async function streamChat(
+  messages: ChatMessage[],
+  onEvent: (event: ChatSSEEvent) => void,
+  signal?: AbortSignal
+): Promise<void> {
+  const res = await fetch(`${API_URL}/api/v1/chat/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages }),
+    signal,
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "Unknown error");
+    throw new Error(`Chat request failed (${res.status}): ${detail}`);
+  }
+
+  const reader = res.body?.getReader();
+  if (!reader) {
+    throw new Error("Response body is not readable");
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Parse complete SSE events (delimited by double newline)
+      const parts = buffer.split("\n\n");
+      // Keep the last (potentially incomplete) part in the buffer
+      buffer = parts.pop() ?? "";
+
+      for (const part of parts) {
+        if (!part.trim()) continue;
+
+        let eventType = "message";
+        let data = "";
+
+        for (const line of part.split("\n")) {
+          if (line.startsWith("event: ")) {
+            eventType = line.slice(7).trim();
+          } else if (line.startsWith("data: ")) {
+            data += (data ? "\n" : "") + line.slice(6);
+          }
+        }
+
+        if (!data) continue;
+
+        try {
+          const parsed: Record<string, unknown> = JSON.parse(data);
+
+          switch (eventType) {
+            case "tool_call":
+              if (typeof parsed.name === "string") {
+                onEvent({ type: "tool_call", name: parsed.name });
+              }
+              break;
+            case "token":
+              if (typeof parsed.text === "string") {
+                onEvent({ type: "token", text: parsed.text });
+              }
+              break;
+            case "source":
+              if (
+                typeof parsed.table === "string" &&
+                typeof parsed.description === "string"
+              ) {
+                onEvent({
+                  type: "source",
+                  table: parsed.table,
+                  description: parsed.description,
+                });
+              }
+              break;
+            case "error":
+              if (typeof parsed.message === "string") {
+                onEvent({ type: "error", message: parsed.message });
+              }
+              break;
+            case "done":
+              onEvent({ type: "done" });
+              break;
+          }
+        } catch {
+          // Skip malformed JSON events
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
 }
