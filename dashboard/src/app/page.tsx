@@ -1,162 +1,76 @@
 import {
   fetchHistoricalNationalPoverty,
-  fetchHistoricalRegionalPoverty,
   fetchNationalPoverty,
   fetchRegionalPoverty,
 } from "@/lib/api";
-import { SummaryCard } from "@/components/ui/summary-card";
-import { HistoricalSummaryCard } from "@/components/ui/historical-summary-card";
-import { PovertyBarChart } from "@/components/charts/poverty-bar-chart";
-import { PovertyTrendChart } from "@/components/charts/poverty-trend-chart";
-import { HistoricalTrendChart } from "@/components/charts/historical-trend-chart";
-import { HistoricalBarChart } from "@/components/charts/historical-bar-chart";
-import { MagnitudeChart } from "@/components/charts/magnitude-chart";
-import Link from "next/link";
+import { mergeNationalTrendData } from "@/lib/data-utils";
+import { PageTransition } from "@/components/layout/page-transition";
+import { HeroKpiStrip } from "@/components/overview/hero-kpi-strip";
+import { UnifiedTrendChart } from "@/components/charts/unified-trend-chart";
+import { RegionalSnapshotWrapper } from "@/components/overview/regional-snapshot-wrapper";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Overview page. Server component that fetches all poverty data
+ * and passes it to client components for display.
+ */
 export default async function Home() {
-  const [nationalData, regionalData, historicalNational, historicalRegional] =
-    await Promise.all([
-      fetchNationalPoverty(),
-      fetchRegionalPoverty(2023),
-      fetchHistoricalNationalPoverty(),
-      fetchHistoricalRegionalPoverty(2015),
-    ]);
+  const [nationalData, regionalData, historicalNational] = await Promise.all([
+    fetchNationalPoverty(),
+    fetchRegionalPoverty(2023),
+    fetchHistoricalNationalPoverty(),
+  ]);
 
-  const nationalByYear = nationalData.records
-    .slice()
-    .sort((a, b) => a.year - b.year);
+  const mergedTrend = mergeNationalTrendData(
+    historicalNational.records,
+    nationalData.records
+  );
 
-  const historicalNationalByYear = historicalNational.records
-    .slice()
-    .sort((a, b) => a.year - b.year);
+  const latest2023 = nationalData.records.find((r) => r.year === 2023);
+  const latest2021 = nationalData.records.find((r) => r.year === 2021);
 
-  const earliest = historicalNationalByYear[0];
-  const latest = historicalNationalByYear[historicalNationalByYear.length - 1];
+  const validValues = mergedTrend
+    .map((d) => d.poverty_incidence_pct)
+    .filter((v): v is number => v != null);
+  const historicalLow = validValues.length > 0 ? Math.min(...validValues) : null;
 
-  const incidenceDiff =
-    latest?.poverty_incidence_pct != null &&
-    earliest?.poverty_incidence_pct != null
-      ? latest.poverty_incidence_pct - earliest.poverty_incidence_pct
-      : null;
-
-  const latestMagnitude = latest?.magnitude_poor_families;
-  const latestThreshold = latest?.poverty_threshold_php;
+  const years = mergedTrend.map((d) => d.year);
+  const dataSpan =
+    years.length > 0
+      ? `${Math.min(...years)}\u2013${Math.max(...years)}`
+      : "N/A";
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-            PH-Pulse
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Philippine Poverty Incidence Dashboard
-          </p>
-        </div>
+    <PageTransition className="px-4 sm:px-6 lg:px-8 py-8">
+      <header className="mb-8">
+        <h1
+          className="text-3xl font-bold text-foreground"
+          style={{ fontFamily: "var(--font-heading)" }}
+        >
+          PH-Pulse
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Philippine Poverty Incidence Dashboard
+        </p>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Summary Cards */}
-        <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {nationalByYear.map((record, i) => (
-            <SummaryCard
-              key={record.year}
-              record={record}
-              previousRecord={i > 0 ? nationalByYear[i - 1] : undefined}
-            />
-          ))}
-        </section>
+      <section className="mb-8">
+        <HeroKpiStrip
+          latestIncidence={latest2023?.poverty_incidence_pct ?? null}
+          prevIncidence={latest2021?.poverty_incidence_pct ?? null}
+          historicalLow={historicalLow}
+          dataSpan={dataSpan}
+        />
+      </section>
 
-        {/* Charts */}
-        <section className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <PovertyTrendChart records={nationalByYear} />
-          <PovertyBarChart records={regionalData.records} />
-        </section>
+      <section className="mb-8">
+        <UnifiedTrendChart data={mergedTrend} />
+      </section>
 
-        {/* Historical Section Divider */}
-        <div className="my-12 border-t border-gray-300" />
-        <h2 className="mb-6 text-xl font-bold tracking-tight text-gray-900">
-          Historical Poverty Trends (1991–2015)
-        </h2>
-
-        {/* Historical Summary Cards */}
-        <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <HistoricalSummaryCard
-            label="Poverty Incidence (2015)"
-            value={
-              latest?.poverty_incidence_pct != null
-                ? `${latest.poverty_incidence_pct}%`
-                : "N/A"
-            }
-            description="National Poverty Incidence (Families)"
-            trend={
-              incidenceDiff !== null
-                ? `${incidenceDiff > 0 ? "+" : ""}${incidenceDiff.toFixed(1)}pp since ${earliest?.year}`
-                : undefined
-            }
-            trendDirection={
-              incidenceDiff !== null
-                ? incidenceDiff > 0
-                  ? "up"
-                  : incidenceDiff < 0
-                    ? "down"
-                    : "neutral"
-                : undefined
-            }
-          />
-          <HistoricalSummaryCard
-            label="Poor Families (2015)"
-            value={
-              latestMagnitude != null
-                ? Number(latestMagnitude).toLocaleString()
-                : "N/A"
-            }
-            description="Magnitude of Poor Families"
-          />
-          <HistoricalSummaryCard
-            label="Poverty Threshold (2015)"
-            value={
-              latestThreshold != null
-                ? `${Number(latestThreshold).toLocaleString()} PHP`
-                : "N/A"
-            }
-            description="Annual Per Capita Poverty Threshold"
-          />
-        </section>
-
-        {/* Historical Charts */}
-        <section className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <HistoricalTrendChart records={historicalNationalByYear} />
-          <HistoricalBarChart records={historicalRegional.records} />
-        </section>
-
-        {/* Magnitude Chart — Full Width */}
-        <section>
-          <MagnitudeChart records={historicalRegional.records} />
-        </section>
-
-        {/* Municipal Section Link */}
-        <div className="my-12 border-t border-gray-300" />
-        <section className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-gray-900">
-              Municipal Poverty Estimates (2006–2012)
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Explore poverty data for 1,646 municipalities and cities across
-              17 regions.
-            </p>
-          </div>
-          <Link
-            href="/municipal"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            View Municipal Data
-          </Link>
-        </section>
-      </main>
-    </div>
+      <section>
+        <RegionalSnapshotWrapper records={regionalData.records} />
+      </section>
+    </PageTransition>
   );
 }

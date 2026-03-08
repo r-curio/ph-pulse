@@ -1,7 +1,12 @@
 import type {
+  ForecastResponse,
+  ForecastSummaryResponse,
   HistoricalPovertyResponse,
+  HistoricalRegionDetailResponse,
   MunicipalPovertyResponse,
   MunicipalTopBottomResponse,
+  PipelineStatusResponse,
+  RegionDetailResponse,
   RegionalPovertyResponse,
 } from "./types";
 
@@ -65,6 +70,38 @@ export async function fetchHistoricalNationalPoverty(): Promise<HistoricalPovert
     throw new Error(`Failed to fetch historical national poverty: ${res.status}`);
   }
   return res.json() as Promise<HistoricalPovertyResponse>;
+}
+
+/**
+ * Fetch poverty data for a specific region across all years.
+ */
+export async function fetchRegionDetail(
+  regionName: string
+): Promise<RegionDetailResponse> {
+  const res = await fetch(
+    `${API_URL}/api/v1/poverty/regions/${encodeURIComponent(regionName)}`,
+    { next: { revalidate: 3600 } }
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to fetch region detail: ${res.status}`);
+  }
+  return res.json() as Promise<RegionDetailResponse>;
+}
+
+/**
+ * Fetch historical poverty data for a specific region across all years.
+ */
+export async function fetchHistoricalRegionDetail(
+  regionName: string
+): Promise<HistoricalRegionDetailResponse> {
+  const res = await fetch(
+    `${API_URL}/api/v1/poverty/historical/regions/${encodeURIComponent(regionName)}`,
+    { next: { revalidate: 3600 } }
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to fetch historical region detail: ${res.status}`);
+  }
+  return res.json() as Promise<HistoricalRegionDetailResponse>;
 }
 
 /**
@@ -155,4 +192,66 @@ export async function fetchMunicipalTrend(
     throw new Error(`Failed to fetch municipal trend: ${res.status}`);
   }
   return res.json() as Promise<MunicipalPovertyResponse>;
+}
+
+/**
+ * Fetch overall pipeline health and per-table BigQuery metadata.
+ */
+export async function fetchPipelineStatus(): Promise<PipelineStatusResponse> {
+  const res = await fetch(`${API_URL}/api/v1/pipeline/status`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch pipeline status: ${res.status}`);
+  }
+  return res.json() as Promise<PipelineStatusResponse>;
+}
+
+/**
+ * Fetch all forecast records, optionally filtered by region and/or year.
+ */
+export async function fetchForecasts(
+  region?: string,
+  year?: number
+): Promise<ForecastResponse> {
+  const searchParams = new URLSearchParams();
+  if (region) searchParams.set("region", region);
+  if (year) searchParams.set("year", String(year));
+
+  const query = searchParams.toString();
+  const url = query
+    ? `${API_URL}/api/v1/poverty/forecasts?${query}`
+    : `${API_URL}/api/v1/poverty/forecasts`;
+
+  const res = await fetch(url, { next: { revalidate: 3600 } });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch forecasts: ${res.status}`);
+  }
+  return res.json() as Promise<ForecastResponse>;
+}
+
+/**
+ * Fetch KPI summary of 2026 forecast predictions.
+ */
+export async function fetchForecastSummary(): Promise<ForecastSummaryResponse> {
+  const res = await fetch(`${API_URL}/api/v1/poverty/forecasts/summary`, {
+    next: { revalidate: 3600 },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch forecast summary: ${res.status}`);
+  }
+  return res.json() as Promise<ForecastSummaryResponse>;
+}
+
+/**
+ * Fetch distinct region names available in forecast data.
+ */
+export async function fetchForecastRegions(): Promise<string[]> {
+  const res = await fetch(`${API_URL}/api/v1/poverty/forecasts/regions`, {
+    next: { revalidate: 3600 },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch forecast regions: ${res.status}`);
+  }
+  return res.json() as Promise<string[]>;
 }

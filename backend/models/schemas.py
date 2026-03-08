@@ -1,5 +1,7 @@
 """Pydantic response models for the poverty API."""
 
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -98,3 +100,52 @@ class MunicipalTopBottomResponse(BaseModel):
     year: int
     top: list[MunicipalPovertyRecord]
     bottom: list[MunicipalPovertyRecord]
+
+
+class TableStatus(BaseModel):
+    """Health status for a single BigQuery table."""
+
+    table_name: str
+    display_name: str
+    layer: str  # "raw" or "mart"
+    row_count: int | None = None
+    last_modified: datetime | None = None
+    health: str  # "healthy" | "stale" | "error"
+
+
+class PipelineStatusResponse(BaseModel):
+    """Overall pipeline health response."""
+
+    overall_health: str  # "healthy" | "stale" | "error"
+    checked_at: datetime
+    tables: list[TableStatus]
+
+
+class ForecastRecord(BaseModel):
+    """Single row from ml_poverty_forecasts."""
+
+    region_name: str
+    year: int
+    predicted_poverty_pct: float
+    model_type: str
+    trained_on_years: str
+    r_squared: float
+
+
+class ForecastResponse(BaseModel):
+    """List response for forecast data."""
+
+    count: int
+    records: list[ForecastRecord]
+
+
+class ForecastSummaryResponse(BaseModel):
+    """KPI summary computed from 2026 forecast predictions."""
+
+    national_avg_2026: float
+    best_region: str
+    best_region_pct: float
+    worst_region: str
+    worst_region_pct: float
+    avg_r_squared: float
+    regions_count: int

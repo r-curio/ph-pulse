@@ -1,25 +1,28 @@
-"""BigQuery query functions for poverty mart data."""
+"""BigQuery query functions for poverty mart data.
+
+Loads the full table once on first access and filters in-memory.
+"""
 
 from google.cloud import bigquery
 
 from backend.models.schemas import RegionalPovertyRecord
 
-_client: bigquery.Client | None = None
-
 TABLE = "ph-pulse.ph_pulse.mart_regional_poverty_summary"
 
-
-def _get_client() -> bigquery.Client:
-    """Return a cached BigQuery client instance."""
-    global _client
-    if _client is None:
-        _client = bigquery.Client()
-    return _client
+_all_records: list[RegionalPovertyRecord] | None = None
 
 
-def _rows_to_records(rows: bigquery.table.RowIterator) -> list[RegionalPovertyRecord]:
-    """Convert BigQuery row iterator to list of Pydantic models."""
-    return [RegionalPovertyRecord(**dict(row)) for row in rows]
+def _load_all() -> list[RegionalPovertyRecord]:
+    """Load all regional poverty records from BigQuery (once)."""
+    global _all_records
+    if _all_records is not None:
+        return _all_records
+
+    client = bigquery.Client()
+    query = f"select * from `{TABLE}` order by year, poverty_incidence_pct desc"
+    rows = client.query(query).result()
+    _all_records = [RegionalPovertyRecord(**dict(row)) for row in rows]
+    return _all_records
 
 
 def get_all_regional_poverty(year: int | None = None) -> list[RegionalPovertyRecord]:
@@ -31,30 +34,10 @@ def get_all_regional_poverty(year: int | None = None) -> list[RegionalPovertyRec
     Returns:
         List of regional poverty records.
     """
-    client = _get_client()
-
+    records = [r for r in _load_all() if r.geo_level == "region"]
     if year is not None:
-        query = f"""
-            SELECT * FROM `{TABLE}`
-            WHERE geo_level = 'region'
-              AND year = @year
-            ORDER BY poverty_incidence_pct DESC
-        """
-        job_config = bigquery.QueryJobConfig(
-            query_parameters=[
-                bigquery.ScalarQueryParameter("year", "INT64", year),
-            ]
-        )
-        rows = client.query(query, job_config=job_config).result()
-    else:
-        query = f"""
-            SELECT * FROM `{TABLE}`
-            WHERE geo_level = 'region'
-            ORDER BY year, poverty_incidence_pct DESC
-        """
-        rows = client.query(query).result()
-
-    return _rows_to_records(rows)
+        records = [r for r in records if r.year == year]
+    return sorted(records, key=lambda r: r.poverty_incidence_pct or 0, reverse=True)
 
 
 def get_regional_poverty_by_name(name: str) -> list[RegionalPovertyRecord]:
@@ -66,20 +49,12 @@ def get_regional_poverty_by_name(name: str) -> list[RegionalPovertyRecord]:
     Returns:
         List of records for that region across all years.
     """
-    client = _get_client()
-    query = f"""
-        SELECT * FROM `{TABLE}`
-        WHERE geo_level = 'region'
-          AND LOWER(geo_name) LIKE CONCAT('%', LOWER(@name), '%')
-        ORDER BY year
-    """
-    job_config = bigquery.QueryJobConfig(
-        query_parameters=[
-            bigquery.ScalarQueryParameter("name", "STRING", name),
-        ]
-    )
-    rows = client.query(query, job_config=job_config).result()
-    return _rows_to_records(rows)
+    lower_name = name.lower()
+    records = [
+        r for r in _load_all()
+        if r.geo_level == "region" and lower_name in r.geo_name.lower()
+    ]
+    return sorted(records, key=lambda r: r.year)
 
 
 def get_national_poverty() -> list[RegionalPovertyRecord]:
@@ -88,11 +63,5 @@ def get_national_poverty() -> list[RegionalPovertyRecord]:
     Returns:
         List of national poverty records ordered by year.
     """
-    client = _get_client()
-    query = f"""
-        SELECT * FROM `{TABLE}`
-        WHERE geo_level = 'national'
-        ORDER BY year
-    """
-    rows = client.query(query).result()
-    return _rows_to_records(rows)
+    records = [r for r in _load_all() if r.geo_level == "national"]
+    return sorted(records, key=lambda r: r.year)

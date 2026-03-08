@@ -26,13 +26,13 @@ interface MunicipalBarChartProps {
 function tierColor(tier: string | null): string {
   switch (tier) {
     case "High":
-      return "#dc2626";
+      return "var(--tier-high)";
     case "Medium":
-      return "#f59e0b";
+      return "var(--tier-medium)";
     case "Low":
-      return "#16a34a";
+      return "var(--tier-low)";
     default:
-      return "#9ca3af";
+      return "#6b7280";
   }
 }
 
@@ -54,9 +54,9 @@ export function MunicipalBarChart({ records, title }: MunicipalBarChartProps) {
   }));
 
   return (
-    <Card className="border-none bg-white text-gray-900 shadow">
+    <Card className="border border-border bg-card">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-gray-900">
+        <CardTitle className="text-lg font-semibold text-foreground">
           {title}
         </CardTitle>
       </CardHeader>
@@ -70,13 +70,13 @@ export function MunicipalBarChart({ records, title }: MunicipalBarChartProps) {
             layout="vertical"
             margin={{ left: 120, right: 20 }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" unit="%" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+            <XAxis type="number" unit="%" tick={{ fill: "#8899AA" }} />
             <YAxis
               type="category"
               dataKey="name"
               width={110}
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: "#8899AA" }}
             />
             <ChartTooltip
               content={
@@ -92,17 +92,17 @@ export function MunicipalBarChart({ records, title }: MunicipalBarChartProps) {
             </Bar>
           </BarChart>
         </ChartContainer>
-        <div className="mt-4 flex gap-4 text-xs text-gray-500">
+        <div className="mt-4 flex gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded bg-red-600" /> High
+            <span className="inline-block h-3 w-3 rounded bg-tier-high" /> High
             (&ge;20%)
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded bg-amber-500" />{" "}
+            <span className="inline-block h-3 w-3 rounded bg-tier-medium" />{" "}
             Medium (&ge;10%)
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded bg-green-600" /> Low
+            <span className="inline-block h-3 w-3 rounded bg-tier-low" /> Low
             (&lt;10%)
           </span>
         </div>

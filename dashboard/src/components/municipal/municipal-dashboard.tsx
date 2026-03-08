@@ -1,17 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import type {
-  MunicipalPovertyRecord,
-  MunicipalPovertyResponse,
-  MunicipalTopBottomResponse,
-} from "@/lib/types";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { MunicipalPovertyRecord } from "@/lib/types";
 import {
-  fetchMunicipalMunicipalities,
-  fetchMunicipalProvinces,
-  fetchMunicipalTopBottom,
-  fetchMunicipalTrend,
-} from "@/lib/api";
+  getMunicipalRecords,
+  getMunicipalTrends,
+} from "@/app/municipal/actions";
 import { HistoricalSummaryCard } from "@/components/ui/historical-summary-card";
 import { MunicipalFilters } from "@/components/municipal/municipal-filters";
 import { MunicipalDataTable } from "@/components/municipal/municipal-data-table";
@@ -23,8 +17,6 @@ interface MunicipalDashboardProps {
   regions: string[];
   /** Initial municipal records (2012, all regions). */
   initialRecords: MunicipalPovertyRecord[];
-  /** Initial top/bottom data. */
-  initialTopBottom: MunicipalTopBottomResponse;
 }
 
 /**
@@ -34,43 +26,25 @@ interface MunicipalDashboardProps {
 export function MunicipalDashboard({
   regions,
   initialRecords,
-  initialTopBottom,
 }: MunicipalDashboardProps) {
   /* All hooks declared at the top of the component body. */
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedYear, setSelectedYear] = useState(2012);
-  const [provinces, setProvinces] = useState<string[]>([]);
   const [records, setRecords] =
     useState<MunicipalPovertyRecord[]>(initialRecords);
-  const [topBottom, setTopBottom] =
-    useState<MunicipalTopBottomResponse>(initialTopBottom);
   const [loading, setLoading] = useState(false);
   const [trendRecords, setTrendRecords] = useState<MunicipalPovertyRecord[]>(
     []
   );
 
-  /** Fetch filtered data whenever filters change. */
+  /** Fetch records whenever region/year change via server action. */
   const fetchData = useCallback(
-    async (region: string, province: string, year: number) => {
+    async (region: string, year: number) => {
       setLoading(true);
       try {
-        const [municipalitiesData, topBottomData]: [
-          MunicipalPovertyResponse,
-          MunicipalTopBottomResponse,
-        ] = await Promise.all([
-          fetchMunicipalMunicipalities({
-            region: region || undefined,
-            province: province || undefined,
-            year,
-          }),
-          fetchMunicipalTopBottom(year, {
-            region: region || undefined,
-            province: province || undefined,
-          }),
-        ]);
-        setRecords(municipalitiesData.records);
-        setTopBottom(topBottomData);
+        const result = await getMunicipalRecords(region, year);
+        setRecords(result);
       } catch (err) {
         console.error("Failed to fetch municipal data:", err);
       } finally {
@@ -80,70 +54,80 @@ export function MunicipalDashboard({
     []
   );
 
-  /** Fetch provinces reactively when selectedRegion changes. */
-  useEffect(() => {
-    if (!selectedRegion) {
-      setProvinces([]);
-      return;
-    }
-    let ignore = false;
-    fetchMunicipalProvinces(selectedRegion)
-      .then((data) => {
-        if (!ignore) setProvinces(data);
-      })
-      .catch((err) => {
-        console.error("Failed to load provinces:", err);
-        if (!ignore) setProvinces([]);
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [selectedRegion]);
-
-  /** Handle region change — reset downstream and re-fetch data. */
+  /** Handle region change and re-fetch data. */
   const handleRegionChange = useCallback(
     async (region: string) => {
       setSelectedRegion(region);
       setSelectedProvince("");
-      await fetchData(region, "", selectedYear);
+      await fetchData(region, selectedYear);
     },
     [fetchData, selectedYear]
   );
 
-  /** Handle province change. */
+  /** Handle province change (client-side filter only). */
   const handleProvinceChange = useCallback(
-    async (province: string) => {
+    (province: string) => {
       setSelectedProvince(province);
-      await fetchData(selectedRegion, province, selectedYear);
     },
-    [fetchData, selectedRegion, selectedYear]
+    []
   );
 
   /** Handle year change. */
   const handleYearChange = useCallback(
     async (year: number) => {
       setSelectedYear(year);
-      await fetchData(selectedRegion, selectedProvince, year);
+      setSelectedProvince("");
+      await fetchData(selectedRegion, year);
     },
-    [fetchData, selectedRegion, selectedProvince]
+    [fetchData, selectedRegion]
   );
 
-  /** Load trend data for top municipalities across all years with race-condition cleanup. */
+  /** Derive province names from current records. */
+  const provinceNames = useMemo(
+    () => [...new Set(records.map((r) => r.province))].sort(),
+    [records]
+  );
+
+  /** Filter records by province first, then derive municipalities from that. */
+  const recordsAfterProvince = useMemo(
+    () =>
+      selectedProvince
+        ? records.filter((r) => r.province === selectedProvince)
+        : records,
+    [records, selectedProvince]
+  );
+
+  /** Province-filtered records are the final filtered set. */
+  const filteredRecords = recordsAfterProvince;
+
+  /** Derive top/bottom 10 from the currently filtered records. */
+  const filteredTop = useMemo(() => {
+    const sorted = filteredRecords
+      .filter((r) => r.poverty_incidence_pct != null)
+      .sort((a, b) => (b.poverty_incidence_pct ?? 0) - (a.poverty_incidence_pct ?? 0));
+    return sorted.slice(0, 10);
+  }, [filteredRecords]);
+
+  const filteredBottom = useMemo(() => {
+    const sorted = filteredRecords
+      .filter((r) => r.poverty_incidence_pct != null)
+      .sort((a, b) => (a.poverty_incidence_pct ?? 0) - (b.poverty_incidence_pct ?? 0));
+    return sorted.slice(0, 10);
+  }, [filteredRecords]);
+
+  /** Load trend data for top filtered municipalities across all years. */
   useEffect(() => {
     let ignore = false;
 
     const loadTrend = async () => {
       try {
-        const topPcodes = topBottom.top.slice(0, 5).map((r) => r.pcode);
+        const topPcodes = filteredTop.slice(0, 5).map((r) => r.pcode);
         if (topPcodes.length === 0) {
           if (!ignore) setTrendRecords([]);
           return;
         }
 
-        /* Fetch individual trends for top 5 municipalities (small queries). */
-        const trendResults = await Promise.all(
-          topPcodes.map((pcode) => fetchMunicipalTrend(pcode))
-        );
+        const trendResults = await getMunicipalTrends(topPcodes);
         if (ignore) return;
 
         setTrendRecords(trendResults.flatMap((r) => r.records));
@@ -156,10 +140,10 @@ export function MunicipalDashboard({
     return () => {
       ignore = true;
     };
-  }, [topBottom.top]);
+  }, [filteredTop]);
 
   /* Compute summary stats (derived values, not hooks). */
-  const validRecords = records.filter(
+  const validRecords = filteredRecords.filter(
     (r) => r.poverty_incidence_pct != null
   );
   const totalMunicipalities = validRecords.length;
@@ -189,7 +173,7 @@ export function MunicipalDashboard({
       <section className="mb-8">
         <MunicipalFilters
           regions={regions}
-          provinces={provinces}
+          provinces={provinceNames}
           selectedRegion={selectedRegion}
           selectedProvince={selectedProvince}
           selectedYear={selectedYear}
@@ -229,11 +213,11 @@ export function MunicipalDashboard({
       {/* Top/Bottom Bar Charts */}
       <section className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
         <MunicipalBarChart
-          records={topBottom.top}
+          records={filteredTop}
           title={`Top 10 Highest Poverty (${selectedYear})`}
         />
         <MunicipalBarChart
-          records={[...topBottom.bottom].reverse()}
+          records={[...filteredBottom].reverse()}
           title={`Top 10 Lowest Poverty (${selectedYear})`}
         />
       </section>
@@ -247,7 +231,7 @@ export function MunicipalDashboard({
 
       {/* Data Table */}
       <section>
-        <MunicipalDataTable records={records} />
+        <MunicipalDataTable records={filteredRecords} />
       </section>
     </div>
   );

@@ -47,6 +47,15 @@ export interface HistoricalPovertyResponse {
   records: HistoricalPovertyRecord[];
 }
 
+/** Detail response for a single region's historical data across all years. */
+export interface HistoricalRegionDetailResponse {
+  region: string;
+  records: HistoricalPovertyRecord[];
+  earliest_poverty_incidence_pct: number | null;
+  latest_poverty_incidence_pct: number | null;
+  latest_poverty_tier: string | null;
+}
+
 /** Single row from mart_municipal_poverty_summary. */
 export interface MunicipalPovertyRecord {
   pcode: string;
@@ -75,4 +84,48 @@ export interface MunicipalTopBottomResponse {
   year: number;
   top: MunicipalPovertyRecord[];
   bottom: MunicipalPovertyRecord[];
+}
+
+/** Health status for a single BigQuery table in the pipeline. */
+export interface TableStatus {
+  table_name: string;
+  display_name: string;
+  layer: string;
+  row_count: number | null;
+  last_modified: string | null;
+  health: "healthy" | "stale" | "error";
+}
+
+/** Overall pipeline health response from /api/v1/pipeline/status. */
+export interface PipelineStatusResponse {
+  overall_health: "healthy" | "stale" | "error";
+  checked_at: string;
+  tables: TableStatus[];
+}
+
+/** Single row from ml_poverty_forecasts. */
+export interface ForecastRecord {
+  region_name: string;
+  year: number;
+  predicted_poverty_pct: number;
+  model_type: string;
+  trained_on_years: string;
+  r_squared: number;
+}
+
+/** List response for forecast data. */
+export interface ForecastResponse {
+  count: number;
+  records: ForecastRecord[];
+}
+
+/** KPI summary from 2026 forecast predictions. */
+export interface ForecastSummaryResponse {
+  national_avg_2026: number;
+  best_region: string;
+  best_region_pct: number;
+  worst_region: string;
+  worst_region_pct: number;
+  avg_r_squared: number;
+  regions_count: number;
 }

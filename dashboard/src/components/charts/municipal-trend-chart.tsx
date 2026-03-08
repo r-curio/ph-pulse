@@ -22,7 +22,7 @@ interface MunicipalTrendChartProps {
   maxLines?: number;
 }
 
-const LINE_COLORS = ["#2563eb", "#dc2626", "#16a34a", "#f59e0b", "#8b5cf6"];
+const LINE_COLORS = ["#3B82F6", "#EF4444", "#10B981", "#F59E0B", "#8B5CF6"];
 
 /**
  * Line chart showing poverty incidence trends for top municipalities (2006-2012).
@@ -72,9 +72,9 @@ export function MunicipalTrendChart({
   ) satisfies ChartConfig;
 
   return (
-    <Card className="border-none bg-white text-gray-900 shadow">
+    <Card className="border border-border bg-card">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-gray-900">
+        <CardTitle className="text-lg font-semibold text-foreground">
           Poverty Trends — Top {maxLines} Municipalities (2006–2012)
         </CardTitle>
       </CardHeader>
@@ -84,9 +84,9 @@ export function MunicipalTrendChart({
           className="min-h-[300px] w-full"
         >
           <LineChart data={chartData} margin={{ left: 10, right: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year" />
-            <YAxis unit="%" domain={[0, "auto"]} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+            <XAxis dataKey="year" tick={{ fill: "#8899AA" }} />
+            <YAxis unit="%" domain={[0, "auto"]} tick={{ fill: "#8899AA" }} />
             <ChartTooltip
               content={
                 <ChartTooltipContent
@@ -108,7 +108,7 @@ export function MunicipalTrendChart({
             ))}
           </LineChart>
         </ChartContainer>
-        <div className="mt-4 flex flex-wrap gap-3 text-xs text-gray-500">
+        <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
           {municipalityNames.map((name, i) => (
             <span key={name} className="flex items-center gap-1">
               <span
