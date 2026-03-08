@@ -2,12 +2,15 @@
 
 Maps Gemini function calls to existing backend data services, executes them,
 and feeds results back to the model for natural language answer generation.
+Supports both JSON responses and SSE streaming.
 """
 
+import json
 import logging
+from collections.abc import Generator
 from typing import Any
 
-from backend.models.schemas import ChatRequest, ChatResponse, SourceInfo
+from backend.models.schemas import ChatMessage, ChatRequest, ChatResponse, SourceInfo
 from backend.services import bigquery_service as regional_svc
 from backend.services import forecast_service as forecast_svc
 from backend.services import historical_poverty_service as historical_svc
@@ -22,7 +25,7 @@ from genai.gemini_service import (
 
 logger = logging.getLogger(__name__)
 
-MAX_TOOL_ROUNDS = 5 
+MAX_TOOL_ROUNDS = 5
 
 
 def _execute_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
@@ -161,6 +164,58 @@ def _tool_name_to_source(name: str) -> SourceInfo:
     return SourceInfo(table=table, description=description)
 
 
+def _build_gemini_history(messages: list[ChatMessage]) -> list[dict[str, str]]:
+    """Convert chat messages to Gemini history format, excluding the last message.
+
+    Maps 'assistant' role to 'model' for Gemini compatibility.
+
+    Args:
+        messages: Full list of chat messages from the request.
+
+    Returns:
+        List of dicts with 'role' and 'parts' keys for Gemini.
+    """
+    return [
+        {
+            "role": "model" if msg.role == "assistant" else msg.role,
+            "parts": msg.content,
+        }
+        for msg in messages[:-1]
+    ]
+
+
+def _deduplicate_sources(sources: list[SourceInfo]) -> list[SourceInfo]:
+    """Remove duplicate source citations by table name.
+
+    Args:
+        sources: List of SourceInfo objects, potentially with duplicates.
+
+    Returns:
+        Deduplicated list preserving first occurrence order.
+    """
+    seen: set[str] = set()
+    unique: list[SourceInfo] = []
+    for src in sources:
+        if src.table not in seen:
+            seen.add(src.table)
+            unique.append(src)
+    return unique
+
+
+def _format_sse(event: str, data: dict[str, Any]) -> str:
+    """Format a Server-Sent Event string.
+
+    Args:
+        event: The SSE event type (e.g. "token", "tool_call", "source", "done").
+        data: The data payload, serialized to JSON.
+
+    Returns:
+        Formatted SSE string ending with double newline.
+    """
+    payload = json.dumps(data)
+    return f"event: {event}\ndata: {payload}\n\n"
+
+
 def answer_question(request: ChatRequest) -> ChatResponse:
     """Process a chat request through Gemini with function calling.
 
@@ -174,19 +229,11 @@ def answer_question(request: ChatRequest) -> ChatResponse:
     Returns:
         ChatResponse with the assistant's answer and data sources used.
     """
-    # Build history for Gemini (exclude the latest user message)
-    history = []
-    for msg in request.messages[:-1]:
-        role = "model" if msg.role == "assistant" else msg.role
-        history.append({"role": role, "parts": msg.content})
-
-    # Get the latest user message
+    history = _build_gemini_history(request.messages)
     user_message = request.messages[-1].content
 
-    # Create Gemini chat session with history
     chat = create_chat_session(history=history if history else None)
 
-    # Send user message and handle tool calls
     sources: list[SourceInfo] = []
     response = chat.send_message(user_message)
 
@@ -195,7 +242,6 @@ def answer_question(request: ChatRequest) -> ChatResponse:
         if not fn_calls:
             break
 
-        # Execute all tool calls for this round
         call_results: list[dict[str, Any]] = []
         for fc in fn_calls:
             tool_name = fc["name"]
@@ -210,28 +256,112 @@ def answer_question(request: ChatRequest) -> ChatResponse:
                 logger.error("Tool execution failed: %s — %s", tool_name, exc)
                 call_results.append({"name": tool_name, "result": {"error": str(exc)}})
 
-        # Send tool results back to Gemini
         response_parts = build_function_response_parts(call_results)
         response = chat.send_message(response_parts)
 
-    # Extract the final text answer
     answer = (
         get_text_response(response)
         if has_text_response(response)
-        else (
-            "I wasn't able to generate an answer. Please try rephrasing your question."
-        )
+        else "I wasn't able to generate an answer. Please try rephrasing your question."
     )
-
-    # Deduplicate sources
-    seen_tables: set[str] = set()
-    unique_sources: list[SourceInfo] = []
-    for src in sources:
-        if src.table not in seen_tables:
-            seen_tables.add(src.table)
-            unique_sources.append(src)
 
     return ChatResponse(
         answer=answer,
-        sources=unique_sources,
+        sources=_deduplicate_sources(sources),
     )
+
+
+def stream_answer(request: ChatRequest) -> Generator[str, None, None]:
+    """Process a chat request and yield SSE events as they occur.
+
+    Resolves all tool calls non-streaming (emitting tool_call events),
+    then streams the final text response word-by-word as token events,
+    followed by source citations and a done event.
+
+    SSE event types:
+        - ``tool_call``: A data tool is being queried. Data: ``{"name": "..."}``
+        - ``token``: A chunk of the answer text. Data: ``{"text": "..."}``
+        - ``source``: A data source citation. Data: ``{"table": "...", "description": "..."}``
+        - ``error``: An error occurred. Data: ``{"message": "..."}``
+        - ``done``: Stream is complete. Data: ``{}``
+
+    Args:
+        request: ChatRequest containing messages and conversation history.
+
+    Yields:
+        Formatted SSE event strings.
+    """
+    history = _build_gemini_history(request.messages)
+    user_message = request.messages[-1].content
+
+    try:
+        chat = create_chat_session(history=history if history else None)
+    except Exception as exc:
+        logger.error("Failed to create chat session: %s", exc)
+        yield _format_sse("error", {"message": "Failed to initialize chat session."})
+        yield _format_sse("done", {})
+        return
+
+    sources: list[SourceInfo] = []
+
+    try:
+        response = chat.send_message(user_message)
+    except Exception as exc:
+        logger.error("Gemini send_message failed: %s", exc)
+        yield _format_sse("error", {"message": "Failed to get a response from the AI."})
+        yield _format_sse("done", {})
+        return
+
+    for _round in range(MAX_TOOL_ROUNDS):
+        fn_calls = extract_function_calls(response)
+        if not fn_calls:
+            break
+
+        call_results: list[dict[str, Any]] = []
+        for fc in fn_calls:
+            tool_name = fc["name"]
+            tool_args = fc["args"]
+            logger.info("Tool call: %s(%s)", tool_name, tool_args)
+
+            yield _format_sse("tool_call", {"name": tool_name})
+
+            try:
+                result = _execute_tool(tool_name, tool_args)
+                call_results.append({"name": tool_name, "result": result})
+                sources.append(_tool_name_to_source(tool_name))
+            except Exception as exc:
+                logger.error("Tool execution failed: %s — %s", tool_name, exc)
+                call_results.append({"name": tool_name, "result": {"error": str(exc)}})
+
+        response_parts = build_function_response_parts(call_results)
+
+        try:
+            response = chat.send_message(response_parts)
+        except Exception as exc:
+            logger.error("Gemini send_message failed after tool results: %s", exc)
+            yield _format_sse(
+                "error",
+                {"message": "Failed to generate answer after data retrieval."},
+            )
+            yield _format_sse("done", {})
+            return
+
+    # Stream the final text answer word-by-word
+    answer = (
+        get_text_response(response)
+        if has_text_response(response)
+        else "I wasn't able to generate an answer. Please try rephrasing your question."
+    )
+
+    words = answer.split()
+    for i, word in enumerate(words):
+        chunk = word if i == 0 else " " + word
+        yield _format_sse("token", {"text": chunk})
+
+    # Emit source citations
+    for src in _deduplicate_sources(sources):
+        yield _format_sse(
+            "source", {"table": src.table, "description": src.description}
+        )
+
+    yield _format_sse("done", {})
