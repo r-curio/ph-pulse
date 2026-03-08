@@ -12,7 +12,12 @@ import type {
   RegionalPovertyResponse,
 } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+/** Server-side calls hit the backend directly; client-side calls use the
+ *  Next.js rewrite proxy (relative URL) so the browser never reaches port 8000. */
+const API_URL =
+  typeof window === "undefined"
+    ? (process.env.BACKEND_URL ?? "http://127.0.0.1:8000")
+    : "";
 
 /**
  * Fetch all regional poverty records, optionally filtered by year.
@@ -270,7 +275,7 @@ export async function streamChat(
   onEvent: (event: ChatSSEEvent) => void,
   signal?: AbortSignal
 ): Promise<void> {
-  const res = await fetch(`${API_URL}/api/v1/chat/stream`, {
+  const res = await fetch("/api/chat/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages }),
