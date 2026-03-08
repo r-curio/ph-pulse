@@ -7,23 +7,18 @@ from google.cloud import bigquery
 
 # Tables to monitor: (dataset_id, table_id, layer, display_name)
 MONITORED_TABLES = [
-    ("ph_pulse_raw", "raw_poverty_incidence", "raw", "Regional Poverty (raw)"),
-    ("ph_pulse_raw", "raw_poverty_families_5yr", "raw", "Historical Poverty (raw)"),
-    ("ph_pulse_raw", "raw_municipal_poverty", "raw", "Municipal Poverty (raw)"),
+    ("ph_pulse", "raw_poverty_incidence_families", "raw", "Regional Poverty (raw)"),
+    ("ph_pulse", "raw_poverty_families_5yr", "raw", "Historical Poverty (raw)"),
+    ("ph_pulse", "raw_municipal_poverty_estimates", "raw", "Municipal Poverty (raw)"),
+    ("ph_pulse", "mart_regional_poverty_summary", "mart", "Regional Poverty (mart)"),
     (
-        "ph_pulse_marts",
-        "mart_regional_poverty_summary",
-        "mart",
-        "Regional Poverty (mart)",
-    ),
-    (
-        "ph_pulse_marts",
+        "ph_pulse",
         "mart_poverty_families_5yr_summary",
         "mart",
         "Historical Poverty (mart)",
     ),
     (
-        "ph_pulse_marts",
+        "ph_pulse",
         "mart_municipal_poverty_summary",
         "mart",
         "Municipal Poverty (mart)",
